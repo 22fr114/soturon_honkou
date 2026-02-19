@@ -1,0 +1,106 @@
+%Root main.tex
+%---------------------------------------------------------------------------
+%付録D　付録
+%---------------------------------------------------------------------------
+
+\chapter{MMCのリアルタイムシミュレーション}
+\thispagestyle{fancy}
+\label{chap:MMC_real_time_simulation}
+
+\section{実験環境}
+MMCのRTS検証を行う際の実機構成を図\ref{hurokuD_hardware}に示す．MMCで用いるFPGAボードは0から5 Vのレンジに対応しているが，出力電圧，出力電流，インダクタ電流，バッファリアクトル電流は負の値も取り扱うため，電圧レベルを変更するボードを挟む必要がある．
+
+\begin{figure}[H]
+  \begin{center}
+  \includegraphics[width=140mm]
+  {gaze/app_D/hurokuD_hardware.png}
+  \caption{実機構成}
+  \label{hurokuD_hardware}
+  \end{center}
+ \end{figure}
+
+今回の実験で用いるMMCに必要なスイッチングポートの数は48個(各相16)となっている．また，MMCから取ってくる状態量は36個(各セル電圧24 + バッファリアクトル電流6 + 出力電圧2 + 出力電流2 + インダクタ電流2)必要となっている．RT-BOXは入出力できるポートの数は1台あたり15個までとなっているため，RT-BOXは少なくとも3台の同時使用が必要となる．したがって，本構成は等価回路を模擬したRT-BOX構成となっている．また，主回路の部分はRT-BOX2を用いている．オレンジ色で囲われている部分はマルチタスクを行っているため，マルチタスクを行えないRT-BOX1でコンパイルしないよう気を付ける．本検証では3台のRT-BOXにそれぞれ主回路・UVレグ・Wレグを書き込んで同時に動作させる．以下に各RT-BOXに書き込むPLECSモデルを示す．センサの電圧比は，実機を対象としているため，実機と同条件である電圧電圧変換比0.01，電流電圧変換比0.09と設定している．
+
+\begin{figure}[H]
+  \begin{center}
+  \includegraphics[width=140mm]
+  {gaze/app_D/hurokuD_main.png}
+  \caption{三相MMCの主回路モデル}
+  \label{hurokuD_UVphase}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[H]
+  \begin{center}
+  \includegraphics[width=140mm]
+  {gaze/app_D/hurokuD_UVphase.png}
+  \caption{三相MMCのUV相レグモデル}
+  \label{hurokuD_UVphase}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[H]
+  \begin{center}
+  \includegraphics[width=140mm]
+  {gaze/app_D/hurokuD_Wphase.png}
+  \caption{三相MMCのW相レグモデル}
+  \label{hurokuD_Wphase}
+  \end{center}
+ \end{figure}
+
+FPGAコントローラ側からはU・V・W相のレグへのゲート信号を出力する．RT-BOX側からはFPGAコントローラに制御に使用する状態量を出力する．RT-BOXはお互いに内部信号を通信することができ，お互いにアーム電圧・アーム電流を送信する．
+
+\begin{figure}[H]
+  \begin{center}
+  \includegraphics[width=140mm]
+  {gaze/app_D/hurokuD_rt_box.png}
+  \caption{RT-BOXの入出力チャンネル}
+  \label{hurokuD_rt_box}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[H]
+  \begin{center}
+  \includegraphics[width=140mm]
+  {gaze/app_D/hurokuD_rt_box_SFP.png}
+  \caption{RT-BOXのSFPポート}
+  \label{hurokuD_rt_box_SFP}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[H]
+  \begin{center}
+  \includegraphics[width=140mm]
+  {gaze/app_D/hurokuD_exp_system.png}
+  \caption{RTS検証システム}
+  \label{hurokuD_exp_system}
+  \end{center}
+ \end{figure}
+
+次に,FPGA ボードとレンジ変換ボードの接続について示す. 直流電圧と出力電圧の切り替えは, 電圧センサボード上において, どちらを使用するのか選択してピンを差し替えることで自由に切り替えることができる. ただし, レンジ変換ボード上においてレンジ変換ピンの設定を行う必要があるため注意. また, フィードバックする状態が増える場合には,Headspring社の仕様書を参考に再設計する必要がある.
+
+\begin{figure}[H]
+  \begin{center}
+  \includegraphics[width=140mm]
+  {gaze/app_D/hurokuD_board.png}
+  \caption{FPGAボードとレンジ変換ボードの接続}
+  \label{hurokuD_board}
+  \end{center}
+ \end{figure}
+
+また，本検証ではセルコンデンサ電圧が50Vで一定の理想状態にある場合，セルコンデンサ電圧が変動する条件における検証を行った．理想状態の検証では各セル部分をすべて定電圧電源50VとしてMSDCDB制御の動作の確認を行い，バランス制御の動作確認を行う際には定電圧電源をセルコンデンサに差し替えて検証を行う．
+
+\begin{figure}[H]
+  \begin{center}
+  \includegraphics[width=140mm]
+  {gaze/app_D/hurokuD_exp_ballance.png}
+  \caption{バランス制御の動作確認時の変更点}
+  \label{hurokuD_exp_ballance}
+  \end{center}
+ \end{figure}
+
+
+\begin{comment}
+
+
+\end{comment}

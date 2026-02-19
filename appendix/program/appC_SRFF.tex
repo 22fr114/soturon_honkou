@@ -1,0 +1,35 @@
+%Root main.tex
+%---------------------------------------------------------------------------
+%付録A　付録
+%---------------------------------------------------------------------------
+
+%\lstnewenvironment{mylisting}[1][]
+%    {\lstset{
+%        frame=single,
+%        numbersep=10pt,
+%        tabsize=2,
+%        #1
+%    }
+%}{}
+\begin{mylisting}[language=c,caption=SRFFモジュール,label=hurokuC_SRFF]
+
+function Qout = fcn(S,R,mQ)
+\%\#codegen
+Q = 0;
+
+if(S==0 \&\& R==0 \&\& mQ==1)
+    Q = 1;
+end
+
+if(S==1 \&\& R==0 \&\& mQ==0)
+    Q = 1;
+end
+
+if(S==1 \&\& R==0 \&\& mQ==1)
+    Q = 1;
+end
+
+Qout = Q;
+
+\end{mylisting}
+

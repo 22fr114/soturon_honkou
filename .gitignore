@@ -1,0 +1,26 @@
+# LaTeX generated files
+*.aux
+*.log
+*.dvi
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.out
+*.toc
+*.lof
+*.lot
+*.bbl
+*.blg
+*.idx
+*.ilg
+*.ind
+
+# PDF file
+*.pdf
+!example_abst.pdf
+# VS Code settings (optional)
+.vscode/
+
+# OS generated files
+.DS_Store
+Thumbs.db

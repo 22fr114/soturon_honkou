@@ -1,0 +1,346 @@
+%Root main.tex
+%---------------------------------------------------------------------------
+%付録D　付録
+%---------------------------------------------------------------------------
+
+\chapter{アンノミナル条件シミュレーション}
+\thispagestyle{fancy}
+\label{chap:}
+
+\subsection{MATLAB Simulinkシミュレーション}
+本資料では三相2レベルインバータに空間ベクトル変調方式を用いたSRDBDC制御を適用すること目的として、ソフトウェア部分を本稿に示す．なお、今回用いたコントローラは、50 MHz A/D変換を可能とするUSPM用コントローラを用いた．
+図\ref{hurokuD_zentaizu}に全体のSimulinkブロックモデル図を示す．
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=140mm]
+  {gaze/app_D/hurokuD_zentaizu.png}
+  \caption{三相2レベルインバータ 全体モデル}
+  \label{hurokuD_zentaizu}
+  \end{center}
+ \end{figure}
+
+図\ref{hurokuD_zentaizu}の基本的な設計は三相MMCと同様の内容となっている．変更したインバータ部分を図\ref{hurokuD_zentaizu_inverter}に示す．
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=140mm]
+  {gaze/app_D/hurokuD_zentaizu_inverter.png}
+  \caption{三相2レベルインバータ インバータモデル}
+  \label{hurokuD_zentaizu_inverter}
+  \end{center}
+ \end{figure}
+
+\newpage
+
+コントローラの全体図を図\ref{hurokuD_zentai_control}に示す．
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=140mm]
+  {gaze/app_D/hurokuD_zentai_control.png}
+  \caption{三相2レベルインバータ コントローラ全体1}
+  \label{hurokuD_zentai_control}
+  \end{center}
+ \end{figure}
+
+HDLコーダを適用する際は，黄色で囲まれた部分に対してHDLコーダを適用する．またコントローラ全体の内部を図\ref{hurokuD_zentai_control_naka}に示す．
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=140mm]
+  {gaze/app_D/hurokuD_zentai_control_naka.png}
+  \caption{三相2レベルインバータ コントローラ全体内部}
+  \label{hurokuD_zentai_control_naka}
+  \end{center}
+ \end{figure}
+
+コントローラは主にデッドビート制御部モジュール，SVPWMモジュール，デッドタイムモジュールに分かれている．
+
+\newpage
+
+次に、SRDBDCモジュールを示す．SRDCDBモジュールを図\ref{hurokuD_zentai_control_SRDCDB}に示す．
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=140mm]
+  {gaze/app_D/hurokuD_zentai_control_SRDCDB.png}
+  \caption{三相2レベルインバータ SRDCDBモジュール}
+  \label{hurokuD_zentai_control_SRDCDB}
+  \end{center}
+ \end{figure}
+
+\newpage
+
+ゲイン設定を図\ref{hurokuD_zentai_control_SRDCDB_gain_settei}に示す．
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=140mm]
+  {gaze/app_D/hurokuD_zentai_control_SRDCDB_gain_settei.png}
+  \caption{三相2レベルインバータ SRDCDBモジュール}
+  \label{hurokuD_zentai_control_SRDCDB_gain_settei}
+  \end{center}
+ \end{figure}
+
+SRDCDBモジュールは三相MMCと同様のゲイン設計を行っている．
+
+\newpage
+
+SVPWMモジュールを図\ref{hurokuD_zentai_control_SVPWM}に示す．
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=140mm]
+  {gaze/app_D/hurokuD_zentai_control_SVPWM.png}
+  \caption{三相2レベルインバータ SVPWMモジュール}
+  \label{hurokuD_zentai_control_SVPWM}
+  \end{center}
+ \end{figure}
+
+SVPWMモジュールは三相2レベルインバータ用のスイッチングを行っている．この時，sectorは指令値を用いている．sectorを演算するモジュールを図\ref{hurokuD_zentai_control_sector_top}に示す．
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=140mm]
+  {gaze/app_D/hurokuD_zentai_control_sector_top.png}
+  \caption{三相2レベルインバータ セクタ導出モジュール}
+  \label{hurokuD_zentai_control_sector_top}
+  \end{center}
+ \end{figure}
+
+図のSector導出部分では、操作量の符号に合わせてsectorの導出を行っている．以下にサブモジュール内部を示す．演算手法は本稿にある．
+
+\clearpage
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_sector_sub1.png}
+  \caption{三相2レベルインバータ セクタ導出モジュール}
+  \label{hurokuD_zentai_control_sector_sub1}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_sector_sub2.png}
+  \caption{三相2レベルインバータ セクタ導出モジュール}
+  \label{hurokuD_zentai_control_sector_sub2}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_sector_sub3.png}
+  \caption{三相2レベルインバータ セクタ導出モジュール}
+  \label{hurokuD_zentai_control_sector_sub3}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_sector_sub4.png}
+  \caption{三相2レベルインバータ セクタ導出モジュール}
+  \label{hurokuD_zentai_control_sector_sub4}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_sector_sub5.png}
+  \caption{三相2レベルインバータ セクタ導出モジュール}
+  \label{hurokuD_zentai_control_sector_sub5}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_sector_sub6.png}
+  \caption{三相2レベルインバータ セクタ導出モジュール}
+  \label{hurokuD_zentai_control_sector_sub6}
+  \end{center}
+ \end{figure}
+
+\clearpage
+
+次に、SVPWMモジュールを示す．SVPWMモジュールでは、Sector1~6の場合分けでスイッチングを行っている．以下に各モジュールを示す．なお、計算アルゴリズムは本資料のセクタ導出に従っている．
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_SVPWM_main.png}
+  \caption{三相2レベルインバータ SVPWM部分全体モジュール}
+  \label{hurokuD_zentai_control_SVPWM_main}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_SVPWM_sub1.png}
+  \caption{三相2レベルインバータ switching\_process\_sector1モジュール}
+  \label{hurokuD_zentai_control_SVPWM_sub1}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_SVPWM_sub2.png}
+  \caption{三相2レベルインバータ calculateTiTj\_sector1モジュール}
+  \label{hurokuD_zentai_control_SVPWM_sub2}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_SVPWM_sub3.png}
+  \caption{三相2レベルインバータ switching\_generateモジュール(全secttorで共通)}
+  \label{hurokuD_zentai_control_SVPWM_sub3}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_SVPWM_sub4.png}
+  \caption{三相2レベルインバータ switching\_process\_sector2モジュール}
+  \label{hurokuD_zentai_control_SVPWM_sub4}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_SVPWM_sub5.png}
+  \caption{三相2レベルインバータ calculateTiTj\_sector2モジュール}
+  \label{hurokuD_zentai_control_SVPWM_sub5}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_SVPWM_sub6.png}
+  \caption{三相2レベルインバータ switching\_process\_sector3モジュール}
+  \label{hurokuD_zentai_control_SVPWM_sub6}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_SVPWM_sub7.png}
+  \caption{三相2レベルインバータ calculateTiTj\_sector3モジュール}
+  \label{hurokuD_zentai_control_SVPWM_sub7}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_SVPWM_sub8.png}
+  \caption{三相2レベルインバータ switching\_process\_sector4モジュール}
+  \label{hurokuD_zentai_control_SVPWM_sub8}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_SVPWM_sub9.png}
+  \caption{三相2レベルインバータ calculateTiTj\_sector4モジュール}
+  \label{hurokuD_zentai_control_SVPWM_sub9}
+  \end{center}
+ \end{figure}
+
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_SVPWM_sub10.png}
+  \caption{三相2レベルインバータ switching\_process\_sector5モジュール}
+  \label{hurokuD_zentai_control_SVPWM_sub10}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_SVPWM_sub11.png}
+  \caption{三相2レベルインバータ calculateTiTj\_sector5モジュール}
+  \label{hurokuD_zentai_control_SVPWM_sub11}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_SVPWM_sub12.png}
+  \caption{三相2レベルインバータ switching\_process\_sector6モジュール}
+  \label{hurokuD_zentai_control_SVPWM_sub12}
+  \end{center}
+ \end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_SVPWM_sub13.png}
+  \caption{三相2レベルインバータ calculateTiTj\_sector6モジュール}
+  \label{hurokuD_zentai_control_SVPWM_sub13}
+  \end{center}
+ \end{figure}
+
+\clearpage
+
+ 次に，ゲート導出部分を示す．ゲート導出部分では，デッドタイムの追加と上下アームのスイッチングを行っている．なお，実機運用する場合は負論理回路で動作させる可能性があるため注意するようにする．
+ 
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=100mm]
+  {gaze/app_D/hurokuD_zentai_control_SVPWM_gate.png}
+  \caption{三相2レベルインバータ ゲート出力モジュール}
+  \label{hurokuD_zentai_control_SVPWM_gate}
+  \end{center}
+ \end{figure}
+
+今回の検証には，50 MHz A/D変換を可能とするUSPM用コントローラを用いた．
+図\ref{hurokuE_syukairo}に全体のPLECSブロックモデル図を示す．
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=140mm]
+  {gaze/app_D/hurokuD_syukairo.png}
+  \caption{三相2レベルインバータ RT-BOX主回路図}
+  \label{hurokuD_syukairo}
+  \end{center}
+ \end{figure}
+
+\newpage
+実際にUSPMと配線した図を図\ref{hurokuD_syukairos}に示す．
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=80mm]
+  {gaze/app_D/hurokuD_syukairos.jpg}
+  \caption{三相2レベルインバータ RT-BOX実装写真}
+  \label{hurokuD_syukairos}
+  \end{center}
+ \end{figure}
+
+
+そして，オープンループ制御とデッドビート制御を切り替えるために切り替えスイッチを実装した．
+RT-BOXから2 Vの電圧を出力し，GNDと導通を切り替えるスイッチを挟むことで切り替えを行っている．内容として2 V以上の高い値の電圧が入力された場合はデッドビート制御を行い，2V未満の場合はオープンループ制御を行う内容となっている．
+
+
+\begin{comment}
+
+
+\end{comment}

@@ -1,0 +1,380 @@
+%Root main.tex
+%---------------------------------------------------------------------------
+%付録E　付録
+%---------------------------------------------------------------------------
+
+\chapter{MMCコントローラ書き込み方法}
+\thispagestyle{fancy}
+\label{chap:}
+
+\section{ロジックアナライザの設定}
+
+(1)~~観測する信号があるモジュールを右クリックし，直下にicon，ilaのIPブロックを作成する.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/IPbrock}
+	\caption{chipscope}
+%	\label{fig:　}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/new_source_wizard}
+	\caption{chipscope}
+%	\label{fig:　}
+\end{figure}
+
+(2)~~(1)のモジュールのソースコードにiconとilaのcomponent及びportmapを記述する．\\
+*iconは図のように記述する．
+*ilaのclkは内部信号の取得周期となる．
+*ilaのTRIGに任意の信号を入力する
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/ILA_1}
+	\caption{chipscope}
+%	\label{fig:　}
+\end{figure}
+
+(3)~~ILAをダブルクリックして開き，Number of trigger portsの数をTRIGの数と一致させる．Sapmple Data Depthは何周期分のデータを取得するか決定する．
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/ILA_2}
+	\caption{chipscope}
+%	\label{fig:　}
+\end{figure}
+
+(4)~~各TRIGのビット幅を(2)で宣言した幅に合わせる．
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/port_map}
+	\caption{chipscope}
+%	\label{fig:　}
+\end{figure}
+
+(5)~~その後，Generateをクリックする．
+
+
+\newpage
+\section{書き込み方法}
+(1)~~コントローラに接続されている24V電源以外の物を全て外す.\\
+*全て接続したまま書き込みも可能.
+
+(2)~~ISEをインストールしたPCとコントローラをJTAGで接続する.
+
+(3)~~コントローラの24V電源を入れる.
+
+(4)~~ISEを起動し,File$\rightarrow$Open Projectからプログラムを開く.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/4}
+	\caption{ISE File画面}
+%	\label{fig:　}
+\end{figure}
+
+(5)~~左側タブ内の以下の項目について緑色のチェックマーク(または注意△！マーク)になっていることを確認する.\\
+Synthesize –XST\\
+Check Syntax\\
+Implement Design\\
+Generate Programming File\\
+もしも,チェックされていない場合は,それぞれ右クリックし,Runをクリックする.\\
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/5_1}
+	\caption{ISE  Process画面1}
+%	\label{fig:　}
+\end{figure}
+
+\newpage
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/5_2}
+	\caption{ISE  Process画面2}
+%	\label{fig:　}
+\end{figure}
+
+(6)~~Generate Target PROM/ACE Fileをダブルクリックする.
+
+(7)~~WarningダイアログはOKをクリックする.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/7}
+	\caption{ISE Generate Target PROM/ACE File画面}
+%	\label{fig:　}
+\end{figure}
+
+\newpage
+
+(8)~~ISE iMPACTが開く.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/8}
+	\caption{ISE iMPACT画面}
+%	\label{fig:　}
+\end{figure}
+
+
+(9)~~Create PROM Fileをダブルクリックする.
+
+(10)~~PROM File Formatterが開く.以下の通りに選択する.\\
+STEP1：Xilinx Flash/PROM\\
+STEP2：PROM Family	→	Platform Flash\\
+Dvice(bits)	→	xcf32p[32M]\\
+ここでAdd Storage Deviceをクリックする.\\
+STEP3：output File name→任意のファイル名(日本語が入らないようにすること)\\
+output File Location→任意のフォルダを指定(日本語が入らないようにすること)\\
+ここまで入力したら,OKをクリックする.\\
+＊ここで作成される.mcsファイルのファイル名は,のちに選択するため覚えておく.\\
+＊ファイル名は,日付と時間でつけると良い.(例：20200000$\_$0000)\\
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/10}
+	\caption{ISE Create PROM File画面}
+%	\label{fig:　}
+\end{figure}
+
+\newpage
+
+(11)~~Add DeviceはOKをクリックする.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/11}
+	\caption{ISE Add Device画面}
+%	\label{fig:　}
+\end{figure}
+
+(12)~~ .bitファイルを選択する.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/12}
+	\caption{ISE Add Device選択画面}
+%	\label{fig:　}
+\end{figure}
+
+\newpage
+
+(13)~~Add DeviceダイアログはNOを選択する.そのあとのダイアログはOKを選択.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/13}
+	\caption{ISE Add Device選択画面}
+%	\label{fig:　}
+\end{figure}
+
+(14)~~ウィンドウ左側タブ内のGenerate Fileをダブルクリックする.
+
+(15)~~Generate Succeededが表示される.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/15}
+	\caption{ISE Generate File実行画面}
+%	\label{fig:　}
+\end{figure}
+
+
+\newpage
+
+(16)~~ウィンドウ左側タブ内のBoundary Scanをダブルクリックする.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/16}
+	\caption{ISE Generate File実行画面}
+%	\label{fig:　}
+\end{figure}
+
+
+(17)~~ウィンドウ右半分タブ内で右クリックし,Initialize Chainをクリックする.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/17}
+	\caption{ISE Initialize Chain実行画面}
+%	\label{fig:　}
+\end{figure}
+
+
+\newpage
+
+(18)~~コントローラに入っているFPGAとPROMが検出されるのを確認したら,ダイアログのCancelをクリックする.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/18}
+	\caption{ISE FPGA/PROM検出画面}
+%	\label{fig:　}
+\end{figure}
+
+(19)~~xcf32pのブロックを右クリックし,Launch File Assignment Wizardをクリックする.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/19}
+	\caption{ISE Launch File Assignment Wizard選択画面}
+%	\label{fig:　}
+\end{figure}
+
+\newpage
+
+(20)~~Assign New Configuration Fileが開くので,Bypassをクリックする.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/20}
+	\caption{ISEAssign New Configuration File画面}
+%	\label{fig:　}
+\end{figure}
+
+
+(21)~~手順(10)で作成した.mcsファイルを選択し,Openをクリックする.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/21}
+	\caption{ISE .mcsファイル選択画面}
+%	\label{fig:　}
+\end{figure}
+
+\newpage
+
+(22)~~Device1はそのままで良い.Device2を選択し,追加で以下の項目にチェックを入れ,OKをクリックする.\\
+Verify\\
+Load FPGA\\
+Parallel Mode\\
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/22_1}
+	\caption{ISE Device1画面}
+%	\label{fig:　}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/22_2}
+	\caption{ISE Device2実行画面}
+%	\label{fig:　}
+\end{figure}
+
+\newpage
+
+
+(23)~~xcf32pのアイコンを右クリックし,programをクリックすると,書き込みが開始する.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/23}
+	\caption{ISE 書き込み開始画面}
+%	\label{fig:　}
+\end{figure}
+
+
+(24)~~ Program Succeededが表示されたら,書き込みが完了する.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/24}
+	\caption{ISE 書き込み完了画面}
+%	\label{fig:　}
+\end{figure}
+
+\newpage
+
+(25)~~コントローラボードのLED6とLED8が点灯したら書き込み成功となる.\\
+＊点灯していなかった場合,書き込みが出来ていない可能性があるので,もう一度やってみるか,プログラムを見直す(仕様メモリを減らす,行数をなるべく減らす等する)必要がある.
+
+(26)~~24V電源を切り,JTAGを外す.\\
+*DSPの接続をしたまま書き込みをしているなら,そのまま実機検証できる.外す必要はない.\\
+基本的に,コントローラ上の配線を抜き差しする場合は,電源を切ること.
+
+
+\newpage
+\section{ロジックアナライザの使用方法}
+(1)~~Analyze Design Using Chipscopeをダブルクリックする．
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/chipscope1}
+	\caption{chipscope}
+%	\label{fig:　}
+\end{figure}
+
+(2)~~左上にあるOpen cable /Search JTAG chain を押し初期化を行う．ここでJTAG エラーと表示される場合がある．その時はSDK 上でXilinx Tools ＞ Configure JTAG settings を選択し，JTAG type をDigilent USB Cable に変更することで回避できる．
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/chipscope2}
+	\caption{chipscope}
+%	\label{fig:　}
+\end{figure}
+
+(3)~~Device → configureを選択し，bitファイルを読み込む．
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/chipscope3}
+	\caption{chipscope}
+%	\label{fig:　}
+\end{figure}
+
+(4)~~Trigger Setup，Waveform，Bus Plotをダブルクリックすると，それぞれトリガ設定，内部信号の数値，波形を見ることができる．
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/chipscope4}
+	\caption{chipscope}
+%	\label{fig:　}
+\end{figure}
+
+(5)~~Trigger Setupでは測定信号のトリガを設定できる．
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/chipscope5}
+	\caption{chipscope}
+%	\label{fig:　}
+\end{figure}
+
+(6)~~Waveformでは取得した信号の数値を見ることができ，符号の有無等の数値の表示形式を変更できる．
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/chipscope6}
+	\caption{chipscope}
+%	\label{fig:　}
+\end{figure}
+
+(7)~~波形の取得方式として，単発取得，連続取得を決めることができる．
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/chipscope8}
+	\caption{chipscope}
+%	\label{fig:　}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=110mm]{gaze/app_E/chipscope9}
+	\caption{chipscope}
+%	\label{fig:　}
+\end{figure}
+
+\begin{comment}
+
+
+\end{comment}
+

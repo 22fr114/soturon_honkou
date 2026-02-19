@@ -1,0 +1,1698 @@
+%Root main.tex
+%---------------------------------------------------------------------------
+%付録A　付録
+%---------------------------------------------------------------------------
+
+%\lstnewenvironment{mylisting}[1][]
+%    {\lstset{
+%        frame=single,
+%        numbersep=10pt,
+%        tabsize=2,
+%        #1
+%    }
+%}{}
+\begin{mylisting}[language=VHDL,caption=AD変換モジュール,label=appF_ADC_module_VHDL]
+
+----------------------------------------------------------------------------------
+-- FPGA Logic for MMC Controller Board
+-- AD7357
+--
+--		Logic No.:		HSP0056-DA0-0001
+--		Target Board:	HSP0056-B00-0001
+--		Target FPGA:	XC6SLX75-2FGG676C
+--
+--		Version:		1.0 Build1
+--		Date:			2016/09/05
+--		Copyright:		Headspring Inc.
+--
+----------------------------------------------------------------------------------
+library IEEE;
+Library UNISIM;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use UNISIM.vcomponents.all;
+
+entity AD7357 is
+	Port (
+		CLK150		: in	std_logic;
+		CLK100		: in	std_logic;
+		RESET		: in	std_logic;
+		A		: in	std_logic_vector(7 downto 0);
+		DW		: in	std_logic_vector(15 downto 0);
+		DR		: out	std_logic_vector(15 downto 0)	:= "00000000" & "00000000";
+		DR2	: out	std_logic_vector(15 downto 0)	:= "00000000" & "00000000";
+		RD		: in	std_logic;
+		WR		: in	std_logic;
+		
+		AD_CS		: out	std_logic							:= '0';
+		AD_CLK		: out	std_logic							:= '1';
+		AD_CH_EN	: out	std_logic_vector(9 downto 0)		:= "1111111111";
+
+		ADC_GR0_CS		: in	std_logic;
+		ADC_GR0_SCLK	: in	std_logic;
+		ADC_GR0_DATA	: in	std_logic_vector(3 downto 0);
+
+		ADC_GR1_CS		: in	std_logic;
+		ADC_GR1_SCLK	: in	std_logic;
+		ADC_GR1_DATA	: in	std_logic_vector(3 downto 0);
+
+		ADC_GR2_CS		: in	std_logic;
+		ADC_GR2_SCLK	: in	std_logic;
+		ADC_GR2_DATA	: in	std_logic_vector(3 downto 0);
+
+		ADC_GR3_CS		: in	std_logic;
+		ADC_GR3_SCLK	: in	std_logic;
+		ADC_GR3_DATA	: in	std_logic_vector(3 downto 0);
+
+		ADC_GR4_CS		: in	std_logic;
+		ADC_GR4_SCLK	: in	std_logic;
+		ADC_GR4_DATA	: in	std_logic_vector(3 downto 0);
+
+		ADC_GR5_CS		: in	std_logic;
+		ADC_GR5_SCLK	: in	std_logic;
+		ADC_GR5_DATA	: in	std_logic_vector(3 downto 0);
+
+		ADC_GR6_CS		: in	std_logic;
+		ADC_GR6_SCLK	: in	std_logic;
+		ADC_GR6_DATA	: in	std_logic_vector(3 downto 0);
+
+		ADC_GR7_CS		: in	std_logic;
+		ADC_GR7_SCLK	: in	std_logic;
+		ADC_GR7_DATA	: in	std_logic_vector(3 downto 0);
+
+		ADC_GR8_CS		: in	std_logic;
+		ADC_GR8_SCLK	: in	std_logic;
+		ADC_GR8_DATA	: in	std_logic_vector(3 downto 0);
+
+		ADC_GR9_CS		: in	std_logic;
+		ADC_GR9_SCLK	: in	std_logic;
+		ADC_GR9_DATA	: in	std_logic_vector(3 downto 0);
+		
+		ADC_ERR			: out	std_logic						:= '0';
+		
+		--追加ver2--
+		Vc_UP1		: out	std_logic_vector(13 downto 0);		--コンデンサ電圧Vc
+		Vc_UP2		: out	std_logic_vector(13 downto 0);
+		Vc_UP3		: out	std_logic_vector(13 downto 0);
+		Vc_UP4		: out	std_logic_vector(13 downto 0);
+		Vc_UN1		: out	std_logic_vector(13 downto 0);
+		Vc_UN2		: out	std_logic_vector(13 downto 0);
+		Vc_UN3		: out	std_logic_vector(13 downto 0);
+		Vc_UN4		: out	std_logic_vector(13 downto 0);
+		Vc_VP1		: out	std_logic_vector(13 downto 0);
+		Vc_VP2		: out	std_logic_vector(13 downto 0);
+		Vc_VP3		: out	std_logic_vector(13 downto 0);
+		Vc_VP4		: out	std_logic_vector(13 downto 0);
+		Vc_VN1		: out	std_logic_vector(13 downto 0);
+		Vc_VN2		: out	std_logic_vector(13 downto 0);
+		Vc_VN3		: out	std_logic_vector(13 downto 0);
+		Vc_VN4		: out	std_logic_vector(13 downto 0);
+		Vc_WP1		: out	std_logic_vector(13 downto 0);
+		Vc_WP2		: out	std_logic_vector(13 downto 0);
+		Vc_WP3		: out	std_logic_vector(13 downto 0);
+		Vc_WP4		: out	std_logic_vector(13 downto 0);
+		Vc_WN1		: out	std_logic_vector(13 downto 0);
+		Vc_WN2		: out	std_logic_vector(13 downto 0);
+		Vc_WN3		: out	std_logic_vector(13 downto 0);
+		Vc_WN4		: out	std_logic_vector(13 downto 0);
+		Iz_UP			: out	std_logic_vector(13 downto 0);		--上下アーム電流Iz
+		Iz_UN			: out	std_logic_vector(13 downto 0);
+		Iz_VP			: out	std_logic_vector(13 downto 0);
+		Iz_VN			: out	std_logic_vector(13 downto 0);
+		Iz_WP			: out	std_logic_vector(13 downto 0);
+		Iz_WN			: out	std_logic_vector(13 downto 0);
+		Vdc			: out	std_logic_vector(13 downto 0);			--直流電源電圧Vdc
+		Vuv_mmc		: out	std_logic_vector(13 downto 0);		--MMC出力線間電圧Vo_mmc
+		Vwu_mmc		: out	std_logic_vector(13 downto 0);
+		Vvw_mmc		: out	std_logic_vector(13 downto 0);
+		Vwu_inv		: out	std_logic_vector(13 downto 0);		--インバータ出力線間電圧Vo_inv
+		Vvw_inv		: out	std_logic_vector(13 downto 0);
+		Vuv_inv		: out	std_logic_vector(13 downto 0);
+		IU_inv		: out	std_logic_vector(13 downto 0);		--インバータ出力電流Io_inv
+		IV_inv		: out	std_logic_vector(13 downto 0);
+		IW_inv		: out	std_logic_vector(13 downto 0)
+		-------		
+		);
+end AD7357;
+
+architecture Behavioral of AD7357 is
+
+	signal SPR				: std_logic_vector(15 downto 0)		:= "00000000" & "00000000";
+
+	signal ADC0_DATA_B		: std_logic_vector(3 downto 0)		:= "0000";
+	signal ADC1_DATA_B		: std_logic_vector(3 downto 0)		:= "0000";
+	signal ADC2_DATA_B		: std_logic_vector(3 downto 0)		:= "0000";
+	signal ADC3_DATA_B		: std_logic_vector(3 downto 0)		:= "0000";
+	signal ADC4_DATA_B		: std_logic_vector(3 downto 0)		:= "0000";
+	signal ADC5_DATA_B		: std_logic_vector(3 downto 0)		:= "0000";
+	signal ADC6_DATA_B		: std_logic_vector(3 downto 0)		:= "0000";
+	signal ADC7_DATA_B		: std_logic_vector(3 downto 0)		:= "0000";
+	signal ADC8_DATA_B		: std_logic_vector(3 downto 0)		:= "0000";
+	signal ADC9_DATA_B		: std_logic_vector(3 downto 0)		:= "0000";
+
+	signal CNT_ADPHASE		: integer range 0 to 70				:= 0;
+
+	signal AD0_CS_B			: std_logic							:= '0';
+	signal AD0_CS_BB		: std_logic							:= '0';
+	signal AD0_CS_BBB		: std_logic							:= '0';
+	signal AD1_CS_B			: std_logic							:= '0';
+	signal AD1_CS_BB		: std_logic							:= '0';
+	signal AD1_CS_BBB		: std_logic							:= '0';
+	signal AD2_CS_B			: std_logic							:= '0';
+	signal AD2_CS_BB		: std_logic							:= '0';
+	signal AD2_CS_BBB		: std_logic							:= '0';
+	signal AD3_CS_B			: std_logic							:= '0';
+	signal AD3_CS_BB		: std_logic							:= '0';
+	signal AD3_CS_BBB		: std_logic							:= '0';
+	signal AD4_CS_B			: std_logic							:= '0';
+	signal AD4_CS_BB		: std_logic							:= '0';
+	signal AD4_CS_BBB		: std_logic							:= '0';
+	signal AD5_CS_B			: std_logic							:= '0';
+	signal AD5_CS_BB		: std_logic							:= '0';
+	signal AD5_CS_BBB		: std_logic							:= '0';
+	signal AD6_CS_B			: std_logic							:= '0';
+	signal AD6_CS_BB		: std_logic							:= '0';
+	signal AD6_CS_BBB		: std_logic							:= '0';
+	signal AD7_CS_B			: std_logic							:= '0';
+	signal AD7_CS_BB		: std_logic							:= '0';
+	signal AD7_CS_BBB		: std_logic							:= '0';
+	signal AD8_CS_B			: std_logic							:= '0';
+	signal AD8_CS_BB		: std_logic							:= '0';
+	signal AD8_CS_BBB		: std_logic							:= '0';
+	signal AD9_CS_B			: std_logic							:= '0';
+	signal AD9_CS_BB		: std_logic							:= '0';
+	signal AD9_CS_BBB		: std_logic							:= '0';
+
+	signal AD0_SCLK_B		: std_logic							:= '0';
+	signal AD0_SCLK_BB		: std_logic							:= '0';
+	signal AD0_SCLK_BBB		: std_logic							:= '0';
+	signal AD1_SCLK_B		: std_logic							:= '0';
+	signal AD1_SCLK_BB		: std_logic							:= '0';
+	signal AD1_SCLK_BBB		: std_logic							:= '0';
+	signal AD2_SCLK_B		: std_logic							:= '0';
+	signal AD2_SCLK_BB		: std_logic							:= '0';
+	signal AD2_SCLK_BBB		: std_logic							:= '0';
+	signal AD3_SCLK_B		: std_logic							:= '0';
+	signal AD3_SCLK_BB		: std_logic							:= '0';
+	signal AD3_SCLK_BBB		: std_logic							:= '0';
+	signal AD4_SCLK_B		: std_logic							:= '0';
+	signal AD4_SCLK_BB		: std_logic							:= '0';
+	signal AD4_SCLK_BBB		: std_logic							:= '0';
+	signal AD5_SCLK_B		: std_logic							:= '0';
+	signal AD5_SCLK_BB		: std_logic							:= '0';
+	signal AD5_SCLK_BBB		: std_logic							:= '0';
+	signal AD6_SCLK_B		: std_logic							:= '0';
+	signal AD6_SCLK_BB		: std_logic							:= '0';
+	signal AD6_SCLK_BBB		: std_logic							:= '0';
+	signal AD7_SCLK_B		: std_logic							:= '0';
+	signal AD7_SCLK_BB		: std_logic							:= '0';
+	signal AD7_SCLK_BBB		: std_logic							:= '0';
+	signal AD8_SCLK_B		: std_logic							:= '0';
+	signal AD8_SCLK_BB		: std_logic							:= '0';
+	signal AD8_SCLK_BBB		: std_logic							:= '0';
+	signal AD9_SCLK_B		: std_logic							:= '0';
+	signal AD9_SCLK_BB		: std_logic							:= '0';
+	signal AD9_SCLK_BBB		: std_logic							:= '0';
+
+	signal CONV_CNT0		: integer range 0 to 16				:= 0;
+	signal CONV_CNT1		: integer range 0 to 16				:= 0;
+	signal CONV_CNT2		: integer range 0 to 16				:= 0;
+	signal CONV_CNT3		: integer range 0 to 16				:= 0;
+	signal CONV_CNT4		: integer range 0 to 16				:= 0;
+	signal CONV_CNT5		: integer range 0 to 16				:= 0;
+	signal CONV_CNT6		: integer range 0 to 16				:= 0;
+	signal CONV_CNT7		: integer range 0 to 16				:= 0;
+	signal CONV_CNT8		: integer range 0 to 16				:= 0;
+	signal CONV_CNT9		: integer range 0 to 16				:= 0;
+
+	signal AD0_SR0			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD0_SR1			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD0_SR2			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD0_SR3			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD1_SR0			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD1_SR1			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD1_SR2			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD1_SR3			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD2_SR0			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD2_SR1			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD2_SR2			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD2_SR3			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD3_SR0			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD3_SR1			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD3_SR2			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD3_SR3			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD4_SR0			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD4_SR1			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD4_SR2			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD4_SR3			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD5_SR0			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD5_SR1			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD5_SR2			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD5_SR3			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD6_SR0			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD6_SR1			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD6_SR2			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD6_SR3			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD7_SR0			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD7_SR1			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD7_SR2			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD7_SR3			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD8_SR0			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD8_SR1			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD8_SR2			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD8_SR3			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD9_SR0			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD9_SR1			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD9_SR2			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal AD9_SR3			: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+
+	signal ADC_GR0_0		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR0_1		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR0_2		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR0_3		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR1_0		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR1_1		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR1_2		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR1_3		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR2_0		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR2_1		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR2_2		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR2_3		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR3_0		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR3_1		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR3_2		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR3_3		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR4_0		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR4_1		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR4_2		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR4_3		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR5_0		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR5_1		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR5_2		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR5_3		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR6_0		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR6_1		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR6_2		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR6_3		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR7_0		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR7_1		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR7_2		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR7_3		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR8_0		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR8_1		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR8_2		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR8_3		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR9_0		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR9_1		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR9_2		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+	signal ADC_GR9_3		: std_logic_vector(13 downto 0)		:= "000000" & "00000000";
+
+	signal UPDATE_EN		: std_logic							:= '1';
+	signal CONV_OK			: std_logic							:= '0';
+	signal CONV_OK_B		: std_logic							:= '0';
+	signal CONV_OK_BB		: std_logic							:= '0';
+	signal CONV_OK_BBB		: std_logic							:= '0';
+
+
+	signal AD0_ERR			: std_logic							:= '0';
+	signal AD1_ERR			: std_logic							:= '0';
+	signal AD2_ERR			: std_logic							:= '0';
+	signal AD3_ERR			: std_logic							:= '0';
+	signal AD4_ERR			: std_logic							:= '0';
+	signal AD5_ERR			: std_logic							:= '0';
+	signal AD6_ERR			: std_logic							:= '0';
+	signal AD7_ERR			: std_logic							:= '0';
+	signal AD8_ERR			: std_logic							:= '0';
+	signal AD9_ERR			: std_logic							:= '0';
+	signal AD10_ERR			: std_logic							:= '0';
+	signal AD11_ERR			: std_logic							:= '0';
+	signal AD12_ERR			: std_logic							:= '0';
+	signal AD13_ERR			: std_logic							:= '0';
+	signal AD14_ERR			: std_logic							:= '0';
+	signal AD15_ERR			: std_logic							:= '0';
+	signal AD16_ERR			: std_logic							:= '0';
+	signal AD17_ERR			: std_logic							:= '0';
+	signal AD18_ERR			: std_logic							:= '0';
+	signal AD19_ERR			: std_logic							:= '0';
+	signal AD20_ERR			: std_logic							:= '0';
+	signal AD21_ERR			: std_logic							:= '0';
+	signal AD22_ERR			: std_logic							:= '0';
+	signal AD23_ERR			: std_logic							:= '0';
+	signal AD24_ERR			: std_logic							:= '0';
+	signal AD25_ERR			: std_logic							:= '0';
+	signal AD26_ERR			: std_logic							:= '0';
+	signal AD27_ERR			: std_logic							:= '0';
+	signal AD28_ERR			: std_logic							:= '0';
+	signal AD29_ERR			: std_logic							:= '0';
+	signal AD30_ERR			: std_logic							:= '0';
+	signal AD31_ERR			: std_logic							:= '0';
+	signal AD32_ERR			: std_logic							:= '0';
+	signal AD33_ERR			: std_logic							:= '0';
+	signal AD34_ERR			: std_logic							:= '0';
+	signal AD35_ERR			: std_logic							:= '0';
+	signal AD36_ERR			: std_logic							:= '0';
+	signal AD37_ERR			: std_logic							:= '0';
+	signal AD38_ERR			: std_logic							:= '0';
+	signal AD39_ERR			: std_logic							:= '0';
+	
+	signal AD_ERR			: std_logic							:= '0';
+	
+	signal ERR_CLEAR		: std_logic							:= '0';
+
+	signal AD0_DATA			: integer range 0 to 16383			:= 0;
+	signal AD1_DATA			: integer range 0 to 16383			:= 0;
+	signal AD2_DATA			: integer range 0 to 16383			:= 0;
+	signal AD3_DATA			: integer range 0 to 16383			:= 0;
+	signal AD4_DATA			: integer range 0 to 16383			:= 0;
+	signal AD5_DATA			: integer range 0 to 16383			:= 0;
+	signal AD6_DATA			: integer range 0 to 16383			:= 0;
+	signal AD7_DATA			: integer range 0 to 16383			:= 0;
+	signal AD8_DATA			: integer range 0 to 16383			:= 0;
+	signal AD9_DATA			: integer range 0 to 16383			:= 0;
+	signal AD10_DATA		: integer range 0 to 16383			:= 0;
+	signal AD11_DATA		: integer range 0 to 16383			:= 0;
+	signal AD12_DATA		: integer range 0 to 16383			:= 0;
+	signal AD13_DATA		: integer range 0 to 16383			:= 0;
+	signal AD14_DATA		: integer range 0 to 16383			:= 0;
+	signal AD15_DATA		: integer range 0 to 16383			:= 0;
+	signal AD16_DATA		: integer range 0 to 16383			:= 0;
+	signal AD17_DATA		: integer range 0 to 16383			:= 0;
+	signal AD18_DATA		: integer range 0 to 16383			:= 0;
+	signal AD19_DATA		: integer range 0 to 16383			:= 0;
+	signal AD20_DATA		: integer range 0 to 16383			:= 0;
+	signal AD21_DATA		: integer range 0 to 16383			:= 0;
+	signal AD22_DATA		: integer range 0 to 16383			:= 0;
+	signal AD23_DATA		: integer range 0 to 16383			:= 0;
+	signal AD24_DATA		: integer range 0 to 16383			:= 0;
+	signal AD25_DATA		: integer range 0 to 16383			:= 0;
+	signal AD26_DATA		: integer range 0 to 16383			:= 0;
+	signal AD27_DATA		: integer range 0 to 16383			:= 0;
+	signal AD28_DATA		: integer range 0 to 16383			:= 0;
+	signal AD29_DATA		: integer range 0 to 16383			:= 0;
+	signal AD30_DATA		: integer range 0 to 16383			:= 0;
+	signal AD31_DATA		: integer range 0 to 16383			:= 0;
+	signal AD32_DATA		: integer range 0 to 16383			:= 0;
+	signal AD33_DATA		: integer range 0 to 16383			:= 0;
+	signal AD34_DATA		: integer range 0 to 16383			:= 0;
+	signal AD35_DATA		: integer range 0 to 16383			:= 0;
+	signal AD36_DATA		: integer range 0 to 16383			:= 0;
+	signal AD37_DATA		: integer range 0 to 16383			:= 0;
+	signal AD38_DATA		: integer range 0 to 16383			:= 0;
+	signal AD39_DATA		: integer range 0 to 16383			:= 0;
+	signal AD0_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD1_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD2_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD3_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD4_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD5_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD6_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD7_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD8_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD9_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD10_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD11_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD12_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD13_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD14_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD15_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD16_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD17_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD18_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD19_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD20_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD21_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD22_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD23_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD24_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD25_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD26_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD27_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD28_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD29_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD30_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD31_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD32_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD33_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD34_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD35_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD36_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD37_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD38_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD39_DATA_B		: integer range 0 to 16383			:= 0;
+	signal AD0_OV_LEVEL		: integer range 0 to 16383			:= 16383;
+	signal AD24_OV_LEVEL	: integer range 0 to 16383			:= 16383;
+	signal AD25_OV_LEVEL	: integer range 0 to 16383			:= 16383;
+	signal AD28_OV_LEVEL	: integer range 0 to 16383			:= 16383;
+	signal AD31_OV_LEVEL	: integer range 0 to 16383			:= 16383;
+	signal AD34_OV_LEVEL	: integer range 0 to 16383			:= 16383;
+	signal AD37_OV_LEVEL	: integer range 0 to 16383			:= 16383;
+	signal AD0_UV_LEVEL		: integer range 0 to 16383			:= 0;
+	signal AD24_UV_LEVEL	: integer range 0 to 16383			:= 0;
+	signal AD25_UV_LEVEL	: integer range 0 to 16383			:= 0;
+	signal AD28_UV_LEVEL	: integer range 0 to 16383			:= 0;
+	signal AD31_UV_LEVEL	: integer range 0 to 16383			:= 0;
+	signal AD34_UV_LEVEL	: integer range 0 to 16383			:= 0;
+	signal AD37_UV_LEVEL	: integer range 0 to 16383			:= 0;
+
+	signal RESET_B		: std_logic							:= '0';
+	signal RESET_200	: std_logic							:= '0';
+
+
+
+begin
+
+	process(CLK100)
+	begin
+		if CLK100'event and CLK100 = '1' then
+			if RD = '1' then
+				case A is
+					when x"00"	=>	DR <= CONV_std_logic_vector(AD0_DATA_B,16);
+					when x"01"	=>	DR <= CONV_std_logic_vector(AD1_DATA_B,16);
+					when x"02"	=>	DR <= CONV_std_logic_vector(AD2_DATA_B,16);
+					when x"03"	=>	DR <= CONV_std_logic_vector(AD3_DATA_B,16);
+					when x"04"	=>	DR <= CONV_std_logic_vector(AD4_DATA_B,16);
+					when x"05"	=>	DR <= CONV_std_logic_vector(AD5_DATA_B,16);
+					when x"06"	=>	DR <= CONV_std_logic_vector(AD6_DATA_B,16);
+					when x"07"	=>	DR <= CONV_std_logic_vector(AD7_DATA_B,16);
+					when x"08"	=>	DR <= CONV_std_logic_vector(AD8_DATA_B,16);
+					when x"09"	=>	DR <= CONV_std_logic_vector(AD9_DATA_B,16);
+					when x"0A"	=>	DR <= CONV_std_logic_vector(AD10_DATA_B,16);
+					when x"0B"	=>	DR <= CONV_std_logic_vector(AD11_DATA_B,16);
+					when x"0C"	=>	DR <= CONV_std_logic_vector(AD12_DATA_B,16);
+					when x"0D"	=>	DR <= CONV_std_logic_vector(AD13_DATA_B,16);
+					when x"0E"	=>	DR <= CONV_std_logic_vector(AD14_DATA_B,16);
+					when x"0F"	=>	DR <= CONV_std_logic_vector(AD15_DATA_B,16);
+					when x"10"	=>	DR <= CONV_std_logic_vector(AD16_DATA_B,16);
+					when x"11"	=>	DR <= CONV_std_logic_vector(AD17_DATA_B,16);
+					when x"12"	=>	DR <= CONV_std_logic_vector(AD18_DATA_B,16);
+					when x"13"	=>	DR <= CONV_std_logic_vector(AD19_DATA_B,16);
+					when x"14"	=>	DR <= CONV_std_logic_vector(AD20_DATA_B,16);
+					when x"15"	=>	DR <= CONV_std_logic_vector(AD21_DATA_B,16);
+					when x"16"	=>	DR <= CONV_std_logic_vector(AD22_DATA_B,16);
+					when x"17"	=>	DR <= CONV_std_logic_vector(AD23_DATA_B,16);
+					when x"18"	=>	DR <= CONV_std_logic_vector(AD24_DATA_B,16);
+					when x"19"	=>	DR <= CONV_std_logic_vector(AD25_DATA_B,16);
+					when x"1A"	=>	DR <= CONV_std_logic_vector(AD26_DATA_B,16);
+					when x"1B"	=>	DR <= CONV_std_logic_vector(AD27_DATA_B,16);
+					when x"1C"	=>	DR <= CONV_std_logic_vector(AD28_DATA_B,16);
+					when x"1D"	=>	DR <= CONV_std_logic_vector(AD29_DATA_B,16);
+					when x"1E"	=>	DR <= CONV_std_logic_vector(AD30_DATA_B,16);
+					when x"1F"	=>	DR <= CONV_std_logic_vector(AD31_DATA_B,16);
+					when x"20"	=>	DR <= CONV_std_logic_vector(AD32_DATA_B,16);
+					when x"21"	=>	DR <= CONV_std_logic_vector(AD33_DATA_B,16);
+					when x"22"	=>	DR <= CONV_std_logic_vector(AD34_DATA_B,16);
+					when x"23"	=>	DR <= CONV_std_logic_vector(AD35_DATA_B,16);
+					when x"24"	=>	DR <= CONV_std_logic_vector(AD36_DATA_B,16);
+					when x"25"	=>	DR <= CONV_std_logic_vector(AD37_DATA_B,16);
+					when x"26"	=>	DR <= CONV_std_logic_vector(AD38_DATA_B,16);
+					when x"27"	=>	DR <= CONV_std_logic_vector(AD39_DATA_B,16);
+				
+					when x"30"	=>	DR <= "00000000" & "0000000" & UPDATE_EN;
+					when x"3F"	=>	DR <= SPR;
+					
+					when x"40"	=>	DR2 <= CONV_std_logic_vector(AD0_OV_LEVEL,16);
+					when x"41"	=>	DR2 <= CONV_std_logic_vector(AD0_UV_LEVEL,16);
+					when x"42"	=>	DR2 <= CONV_std_logic_vector(AD24_OV_LEVEL,16);
+					when x"43"	=>	DR2 <= CONV_std_logic_vector(AD24_UV_LEVEL,16);
+					when x"44"	=>	DR2 <= CONV_std_logic_vector(AD25_OV_LEVEL,16);
+					when x"45"	=>	DR2 <= CONV_std_logic_vector(AD25_UV_LEVEL,16);
+					when x"46"	=>	DR2 <= CONV_std_logic_vector(AD28_OV_LEVEL,16);
+					when x"47"	=>	DR2 <= CONV_std_logic_vector(AD28_UV_LEVEL,16);
+					when x"48"	=>	DR2 <= CONV_std_logic_vector(AD31_OV_LEVEL,16);
+					when x"49"	=>	DR2 <= CONV_std_logic_vector(AD31_UV_LEVEL,16);
+					when x"4A"	=>	DR2 <= CONV_std_logic_vector(AD34_OV_LEVEL,16);
+					when x"4B"	=>	DR2 <= CONV_std_logic_vector(AD34_UV_LEVEL,16);
+					when x"4C"	=>	DR2 <= CONV_std_logic_vector(AD37_OV_LEVEL,16);
+					when x"4D"	=>	DR2 <= CONV_std_logic_vector(AD37_UV_LEVEL,16);
+				
+					when x"50"	=>	DR2 <= "00000000" & "0000000" & AD_ERR;
+					when x"51"	=>	DR2 <= AD15_ERR & AD14_ERR & AD13_ERR & AD12_ERR & AD11_ERR & AD10_ERR & AD9_ERR & AD8_ERR 
+											& AD7_ERR & AD6_ERR & AD5_ERR & AD4_ERR & AD3_ERR & AD2_ERR & AD1_ERR & AD0_ERR;
+					when x"52"	=>	DR2 <= AD31_ERR & AD30_ERR & AD29_ERR & AD28_ERR & AD27_ERR & AD26_ERR & AD25_ERR & AD24_ERR 
+											& AD23_ERR & AD22_ERR & AD21_ERR & AD20_ERR & AD19_ERR & AD18_ERR & AD17_ERR & AD16_ERR;
+					when x"53"	=>	DR2 <= "00000000"
+											& AD39_ERR & AD38_ERR & AD37_ERR & AD36_ERR & AD35_ERR & AD34_ERR & AD33_ERR & AD32_ERR;
+
+					when x"FF"	=>	DR2 <= SPR;
+					when others	=>	DR2 <= "00000000" & "00000000";
+				end case;
+			end if;
+
+			if RESET = '1' then
+				UPDATE_EN		<= '1';
+				AD_CH_EN		<= "1111111111";
+				SPR				<= "00000000" & "00000000";
+				
+				AD0_OV_LEVEL	<= 16383;
+				AD24_OV_LEVEL	<= 16383;
+				AD25_OV_LEVEL	<= 16383;
+				AD28_OV_LEVEL	<= 16383;
+				AD31_OV_LEVEL	<= 16383;
+				AD34_OV_LEVEL	<= 16383;
+				AD37_OV_LEVEL	<= 16383;
+				AD0_UV_LEVEL	<= 0;
+				AD24_UV_LEVEL	<= 0;
+				AD25_UV_LEVEL	<= 0;
+				AD28_UV_LEVEL	<= 0;
+				AD31_UV_LEVEL	<= 0;
+				AD34_UV_LEVEL	<= 0;
+				AD37_UV_LEVEL	<= 0;
+				
+				ERR_CLEAR		<= '0';
+			elsif WR = '1' then
+				case A is
+					when x"30"	=>	UPDATE_EN	<= DW(0);
+					when x"31"	=>	AD_CH_EN	<= DW(9 downto 0);						-- only for debug use
+					when x"40"	=>	AD0_OV_LEVEL	<= CONV_INTEGER(DW(13 downto 0));
+					when x"41"	=>	AD0_UV_LEVEL	<= CONV_INTEGER(DW(13 downto 0));
+					when x"42"	=>	AD24_OV_LEVEL	<= CONV_INTEGER(DW(13 downto 0));
+					when x"43"	=>	AD24_UV_LEVEL	<= CONV_INTEGER(DW(13 downto 0));
+					when x"44"	=>	AD25_OV_LEVEL	<= CONV_INTEGER(DW(13 downto 0));
+					when x"45"	=>	AD25_UV_LEVEL	<= CONV_INTEGER(DW(13 downto 0));
+					when x"46"	=>	AD28_OV_LEVEL	<= CONV_INTEGER(DW(13 downto 0));
+					when x"47"	=>	AD28_UV_LEVEL	<= CONV_INTEGER(DW(13 downto 0));
+					when x"48"	=>	AD31_OV_LEVEL	<= CONV_INTEGER(DW(13 downto 0));
+					when x"49"	=>	AD31_UV_LEVEL	<= CONV_INTEGER(DW(13 downto 0));
+					when x"4A"	=>	AD34_OV_LEVEL	<= CONV_INTEGER(DW(13 downto 0));
+					when x"4B"	=>	AD34_UV_LEVEL	<= CONV_INTEGER(DW(13 downto 0));
+					when x"4C"	=>	AD37_OV_LEVEL	<= CONV_INTEGER(DW(13 downto 0));
+					when x"4D"	=>	AD37_UV_LEVEL	<= CONV_INTEGER(DW(13 downto 0));
+					when x"50"	=>	ERR_CLEAR	<= DW(0);
+					when x"FF"	=>	SPR			<= DW;
+					when others		=> null;
+				end case;
+			else
+				ERR_CLEAR		<= '0';
+			end if;
+			
+			
+			CONV_OK_B	<= CONV_OK;
+			CONV_OK_BB	<= CONV_OK_B;
+			CONV_OK_BBB	<= CONV_OK_BB;
+			
+			
+			if RESET = '1' then
+				AD0_DATA	<= 0;
+				AD1_DATA	<= 0;
+				AD2_DATA	<= 0;
+				AD3_DATA	<= 0;
+				AD4_DATA	<= 0;
+				AD5_DATA	<= 0;
+				AD6_DATA	<= 0;
+				AD7_DATA	<= 0;
+				AD8_DATA	<= 0;
+				AD9_DATA	<= 0;
+				AD10_DATA	<= 0;
+				AD11_DATA	<= 0;
+				AD12_DATA	<= 0;
+				AD13_DATA	<= 0;
+				AD14_DATA	<= 0;
+				AD15_DATA	<= 0;
+				AD16_DATA	<= 0;
+				AD17_DATA	<= 0;
+				AD18_DATA	<= 0;
+				AD19_DATA	<= 0;
+				AD20_DATA	<= 0;
+				AD21_DATA	<= 0;
+				AD22_DATA	<= 0;
+				AD23_DATA	<= 0;
+				AD24_DATA	<= 0;
+				AD25_DATA	<= 0;
+				AD26_DATA	<= 0;
+				AD27_DATA	<= 0;
+				AD28_DATA	<= 0;
+				AD29_DATA	<= 0;
+				AD30_DATA	<= 0;
+				AD31_DATA	<= 0;
+				AD32_DATA	<= 0;
+				AD33_DATA	<= 0;
+				AD34_DATA	<= 0;
+				AD35_DATA	<= 0;
+				AD36_DATA	<= 0;
+				AD37_DATA	<= 0;
+				AD38_DATA	<= 0;
+				AD39_DATA	<= 0;
+				
+			elsif (CONV_OK_BBB = '0') and (CONV_OK_BB = '1') then
+				
+				AD0_DATA	<= CONV_INTEGER(ADC_GR0_0);
+				AD1_DATA	<= CONV_INTEGER(ADC_GR0_1);
+				AD2_DATA	<= CONV_INTEGER(ADC_GR0_2);
+				AD3_DATA	<= CONV_INTEGER(ADC_GR0_3);
+				AD4_DATA	<= CONV_INTEGER(ADC_GR1_0);
+				AD5_DATA	<= CONV_INTEGER(ADC_GR1_1);
+				AD6_DATA	<= CONV_INTEGER(ADC_GR1_2);
+				AD7_DATA	<= CONV_INTEGER(ADC_GR1_3);
+				AD8_DATA	<= CONV_INTEGER(ADC_GR2_0);
+				AD9_DATA	<= CONV_INTEGER(ADC_GR2_1);
+				AD10_DATA	<= CONV_INTEGER(ADC_GR2_2);
+				AD11_DATA	<= CONV_INTEGER(ADC_GR2_3);
+				AD12_DATA	<= CONV_INTEGER(ADC_GR3_0);
+				AD13_DATA	<= CONV_INTEGER(ADC_GR3_1);
+				AD14_DATA	<= CONV_INTEGER(ADC_GR3_2);
+				AD15_DATA	<= CONV_INTEGER(ADC_GR3_3);
+				AD16_DATA	<= CONV_INTEGER(ADC_GR4_0);
+				AD17_DATA	<= CONV_INTEGER(ADC_GR4_1);
+				AD18_DATA	<= CONV_INTEGER(ADC_GR4_2);
+				AD19_DATA	<= CONV_INTEGER(ADC_GR4_3);
+				AD20_DATA	<= CONV_INTEGER(ADC_GR5_0);
+				AD21_DATA	<= CONV_INTEGER(ADC_GR5_1);
+				AD22_DATA	<= CONV_INTEGER(ADC_GR5_2);
+				AD23_DATA	<= CONV_INTEGER(ADC_GR5_3);
+				AD24_DATA	<= CONV_INTEGER(ADC_GR6_0);
+				AD25_DATA	<= CONV_INTEGER(ADC_GR6_1);
+				AD26_DATA	<= CONV_INTEGER(ADC_GR6_2);
+				AD27_DATA	<= CONV_INTEGER(ADC_GR6_3);
+				AD28_DATA	<= CONV_INTEGER(ADC_GR7_0);
+				AD29_DATA	<= CONV_INTEGER(ADC_GR7_1);
+				AD30_DATA	<= CONV_INTEGER(ADC_GR7_2);
+				AD31_DATA	<= CONV_INTEGER(ADC_GR7_3);
+				AD32_DATA	<= CONV_INTEGER(ADC_GR8_0);
+				AD33_DATA	<= CONV_INTEGER(ADC_GR8_1);
+				AD34_DATA	<= CONV_INTEGER(ADC_GR8_2);
+				AD35_DATA	<= CONV_INTEGER(ADC_GR8_3);
+				AD36_DATA	<= CONV_INTEGER(ADC_GR9_0);
+				AD37_DATA	<= CONV_INTEGER(ADC_GR9_1);
+				AD38_DATA	<= CONV_INTEGER(ADC_GR9_2);
+				AD39_DATA	<= CONV_INTEGER(ADC_GR9_3);
+			end if;
+
+			if RESET = '1' then
+				AD0_ERR		<= '0';
+				AD1_ERR		<= '0';
+				AD2_ERR		<= '0';
+				AD3_ERR		<= '0';
+				AD4_ERR		<= '0';
+				AD5_ERR		<= '0';
+				AD6_ERR		<= '0';
+				AD7_ERR		<= '0';
+				AD8_ERR		<= '0';
+				AD9_ERR		<= '0';
+				AD10_ERR	<= '0';
+				AD11_ERR	<= '0';
+				AD12_ERR	<= '0';
+				AD13_ERR	<= '0';
+				AD14_ERR	<= '0';
+				AD15_ERR	<= '0';
+				AD16_ERR	<= '0';
+				AD17_ERR	<= '0';
+				AD18_ERR	<= '0';
+				AD19_ERR	<= '0';
+				AD20_ERR	<= '0';
+				AD21_ERR	<= '0';
+				AD22_ERR	<= '0';
+				AD23_ERR	<= '0';
+				AD24_ERR	<= '0';
+				AD25_ERR	<= '0';
+				AD26_ERR	<= '0';
+				AD27_ERR	<= '0';
+				AD28_ERR	<= '0';
+				AD29_ERR	<= '0';
+				AD30_ERR	<= '0';
+				AD31_ERR	<= '0';
+				AD32_ERR	<= '0';
+				AD33_ERR	<= '0';
+				AD34_ERR	<= '0';
+				AD35_ERR	<= '0';
+				AD36_ERR	<= '0';
+				AD37_ERR	<= '0';
+				AD38_ERR	<= '0';
+				AD39_ERR	<= '0';
+			
+			else
+				if (AD0_DATA > AD0_OV_LEVEL) or (AD0_DATA < AD0_UV_LEVEL) then
+					AD0_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD0_ERR	<= '0';
+				end if;
+				
+				if (AD1_DATA > AD0_OV_LEVEL) or (AD1_DATA < AD0_UV_LEVEL) then
+					AD1_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD1_ERR	<= '0';
+				end if;
+				
+				if (AD2_DATA > AD0_OV_LEVEL) or (AD2_DATA < AD0_UV_LEVEL) then
+					AD2_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD2_ERR	<= '0';
+				end if;
+				
+				if (AD3_DATA > AD0_OV_LEVEL) or (AD3_DATA < AD0_UV_LEVEL) then
+					AD3_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD3_ERR	<= '0';
+				end if;
+				
+				if (AD4_DATA > AD0_OV_LEVEL) or (AD4_DATA < AD0_UV_LEVEL) then
+					AD4_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD4_ERR	<= '0';
+				end if;
+				
+				if (AD5_DATA > AD0_OV_LEVEL) or (AD5_DATA < AD0_UV_LEVEL) then
+					AD5_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD5_ERR	<= '0';
+				end if;
+				
+				if (AD6_DATA > AD0_OV_LEVEL) or (AD6_DATA < AD0_UV_LEVEL) then
+					AD6_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD6_ERR	<= '0';
+				end if;
+				
+				if (AD7_DATA > AD0_OV_LEVEL) or (AD7_DATA < AD0_UV_LEVEL) then
+					AD7_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD7_ERR	<= '0';
+				end if;
+				
+				if (AD8_DATA > AD0_OV_LEVEL) or (AD8_DATA < AD0_UV_LEVEL) then
+					AD8_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD8_ERR	<= '0';
+				end if;
+				
+				if (AD9_DATA > AD0_OV_LEVEL) or (AD9_DATA < AD0_UV_LEVEL) then
+					AD9_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD9_ERR	<= '0';
+				end if;
+				
+				
+				
+				if (AD10_DATA > AD0_OV_LEVEL) or (AD10_DATA < AD0_UV_LEVEL) then
+					AD10_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD10_ERR	<= '0';
+				end if;
+				
+				if (AD11_DATA > AD0_OV_LEVEL) or (AD11_DATA < AD0_UV_LEVEL) then
+					AD11_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD11_ERR	<= '0';
+				end if;
+				
+				if (AD12_DATA > AD0_OV_LEVEL) or (AD12_DATA < AD0_UV_LEVEL) then
+					AD12_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD12_ERR	<= '0';
+				end if;
+				
+				if (AD13_DATA > AD0_OV_LEVEL) or (AD13_DATA < AD0_UV_LEVEL) then
+					AD13_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD13_ERR	<= '0';
+				end if;
+				
+				if (AD14_DATA > AD0_OV_LEVEL) or (AD14_DATA < AD0_UV_LEVEL) then
+					AD14_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD14_ERR	<= '0';
+				end if;
+				
+				if (AD15_DATA > AD0_OV_LEVEL) or (AD15_DATA < AD0_UV_LEVEL) then
+					AD15_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD15_ERR	<= '0';
+				end if;
+				
+				if (AD16_DATA > AD0_OV_LEVEL) or (AD16_DATA < AD0_UV_LEVEL) then
+					AD16_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD16_ERR	<= '0';
+				end if;
+				
+				if (AD17_DATA > AD0_OV_LEVEL) or (AD17_DATA < AD0_UV_LEVEL) then
+					AD17_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD17_ERR	<= '0';
+				end if;
+				
+				if (AD18_DATA > AD0_OV_LEVEL) or (AD18_DATA < AD0_UV_LEVEL) then
+					AD18_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD18_ERR	<= '0';
+				end if;
+				
+				if (AD19_DATA > AD0_OV_LEVEL) or (AD19_DATA < AD0_UV_LEVEL) then
+					AD19_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD19_ERR	<= '0';
+				end if;
+				
+				
+				
+				if (AD20_DATA > AD0_OV_LEVEL) or (AD20_DATA < AD0_UV_LEVEL) then
+					AD20_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD20_ERR	<= '0';
+				end if;
+				
+				if (AD21_DATA > AD0_OV_LEVEL) or (AD21_DATA < AD0_UV_LEVEL) then
+					AD21_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD21_ERR	<= '0';
+				end if;
+				
+				if (AD22_DATA > AD0_OV_LEVEL) or (AD22_DATA < AD0_UV_LEVEL) then
+					AD22_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD22_ERR	<= '0';
+				end if;
+				
+				if (AD23_DATA > AD0_OV_LEVEL) or (AD23_DATA < AD0_UV_LEVEL) then
+					AD23_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD23_ERR	<= '0';
+				end if;
+				
+				if (AD24_DATA > AD24_OV_LEVEL) or (AD24_DATA < AD24_UV_LEVEL) then
+					AD24_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD24_ERR	<= '0';
+				end if;
+				
+				if (AD25_DATA > AD25_OV_LEVEL) or (AD25_DATA < AD25_UV_LEVEL) then
+					AD25_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD25_ERR	<= '0';
+				end if;
+				
+				if (AD26_DATA > AD25_OV_LEVEL) or (AD26_DATA < AD25_UV_LEVEL) then
+					AD26_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD26_ERR	<= '0';
+				end if;
+				
+				if (AD27_DATA > AD25_OV_LEVEL) or (AD27_DATA < AD25_UV_LEVEL) then
+					AD27_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD27_ERR	<= '0';
+				end if;
+				
+				if (AD28_DATA > AD28_OV_LEVEL) or (AD28_DATA < AD28_UV_LEVEL) then
+					AD28_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD28_ERR	<= '0';
+				end if;
+				
+				if (AD29_DATA > AD28_OV_LEVEL) or (AD29_DATA < AD28_UV_LEVEL) then
+					AD29_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD29_ERR	<= '0';
+				end if;
+				
+				
+				
+				if (AD30_DATA > AD28_OV_LEVEL) or (AD30_DATA < AD28_UV_LEVEL) then
+					AD30_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD30_ERR	<= '0';
+				end if;
+				
+				if (AD31_DATA > AD31_OV_LEVEL) or (AD31_DATA < AD31_UV_LEVEL) then
+					AD31_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD31_ERR	<= '0';
+				end if;
+				
+				if (AD32_DATA > AD31_OV_LEVEL) or (AD32_DATA < AD31_UV_LEVEL) then
+					AD32_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD32_ERR	<= '0';
+				end if;
+				
+				if (AD33_DATA > AD31_OV_LEVEL) or (AD33_DATA < AD31_UV_LEVEL) then
+					AD33_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD33_ERR	<= '0';
+				end if;
+				
+				if (AD34_DATA > AD34_OV_LEVEL) or (AD34_DATA < AD34_UV_LEVEL) then
+					AD34_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD34_ERR	<= '0';
+				end if;
+				
+				if (AD35_DATA > AD34_OV_LEVEL) or (AD35_DATA < AD34_UV_LEVEL) then
+					AD35_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD35_ERR	<= '0';
+				end if;
+				
+				if (AD36_DATA > AD34_OV_LEVEL) or (AD36_DATA < AD34_UV_LEVEL) then
+					AD36_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD36_ERR	<= '0';
+				end if;
+				
+				if (AD37_DATA > AD37_OV_LEVEL) or (AD37_DATA < AD37_UV_LEVEL) then
+					AD37_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD37_ERR	<= '0';
+				end if;
+				
+				if (AD38_DATA > AD37_OV_LEVEL) or (AD38_DATA < AD37_UV_LEVEL) then
+					AD38_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD38_ERR	<= '0';
+				end if;
+				
+				if (AD39_DATA > AD37_OV_LEVEL) or (AD39_DATA < AD37_UV_LEVEL) then
+					AD39_ERR	<= '1';
+				elsif ERR_CLEAR = '1' then
+					AD39_ERR	<= '0';
+				end if;
+				
+			end if;
+			
+			if RESET = '1' then
+				AD0_DATA_B	<= 0;
+				AD1_DATA_B	<= 0;
+				AD2_DATA_B	<= 0;
+				AD3_DATA_B	<= 0;
+				AD4_DATA_B	<= 0;
+				AD5_DATA_B	<= 0;
+				AD6_DATA_B	<= 0;
+				AD7_DATA_B	<= 0;
+				AD8_DATA_B	<= 0;
+				AD9_DATA_B	<= 0;
+				AD10_DATA_B	<= 0;
+				AD11_DATA_B	<= 0;
+				AD12_DATA_B	<= 0;
+				AD13_DATA_B	<= 0;
+				AD14_DATA_B	<= 0;
+				AD15_DATA_B	<= 0;
+				AD16_DATA_B	<= 0;
+				AD17_DATA_B	<= 0;
+				AD18_DATA_B	<= 0;
+				AD19_DATA_B	<= 0;
+				AD20_DATA_B	<= 0;
+				AD21_DATA_B	<= 0;
+				AD22_DATA_B	<= 0;
+				AD23_DATA_B	<= 0;
+				AD24_DATA_B	<= 0;
+				AD25_DATA_B	<= 0;
+				AD26_DATA_B	<= 0;
+				AD27_DATA_B	<= 0;
+				AD28_DATA_B	<= 0;
+				AD29_DATA_B	<= 0;
+				AD30_DATA_B	<= 0;
+				AD31_DATA_B	<= 0;
+				AD32_DATA_B	<= 0;
+				AD33_DATA_B	<= 0;
+				AD34_DATA_B	<= 0;
+				AD35_DATA_B	<= 0;
+				AD36_DATA_B	<= 0;
+				AD37_DATA_B	<= 0;
+				AD38_DATA_B	<= 0;
+				AD39_DATA_B	<= 0;
+			elsif (UPDATE_EN = '1') then
+				AD0_DATA_B	<= AD0_DATA;
+				AD1_DATA_B	<= AD1_DATA;
+				AD2_DATA_B	<= AD2_DATA;
+				AD3_DATA_B	<= AD3_DATA;
+				AD4_DATA_B	<= AD4_DATA;
+				AD5_DATA_B	<= AD5_DATA;
+				AD6_DATA_B	<= AD6_DATA;
+				AD7_DATA_B	<= AD7_DATA;
+				AD8_DATA_B	<= AD8_DATA;
+				AD9_DATA_B	<= AD9_DATA;
+				AD10_DATA_B	<= AD10_DATA;
+				AD11_DATA_B	<= AD11_DATA;
+				AD12_DATA_B	<= AD12_DATA;
+				AD13_DATA_B	<= AD13_DATA;
+				AD14_DATA_B	<= AD14_DATA;
+				AD15_DATA_B	<= AD15_DATA;
+				AD16_DATA_B	<= AD16_DATA;
+				AD17_DATA_B	<= AD17_DATA;
+				AD18_DATA_B	<= AD18_DATA;
+				AD19_DATA_B	<= AD19_DATA;
+				AD20_DATA_B	<= AD20_DATA;
+				AD21_DATA_B	<= AD21_DATA;
+				AD22_DATA_B	<= AD22_DATA;
+				AD23_DATA_B	<= AD23_DATA;
+				AD24_DATA_B	<= AD24_DATA;
+				AD25_DATA_B	<= AD25_DATA;
+				AD26_DATA_B	<= AD26_DATA;
+				AD27_DATA_B	<= AD27_DATA;
+				AD28_DATA_B	<= AD28_DATA;
+				AD29_DATA_B	<= AD29_DATA;
+				AD30_DATA_B	<= AD30_DATA;
+				AD31_DATA_B	<= AD31_DATA;
+				AD32_DATA_B	<= AD32_DATA;
+				AD33_DATA_B	<= AD33_DATA;
+				AD34_DATA_B	<= AD34_DATA;
+				AD35_DATA_B	<= AD35_DATA;
+				AD36_DATA_B	<= AD36_DATA;
+				AD37_DATA_B	<= AD37_DATA;
+				AD38_DATA_B	<= AD38_DATA;
+				AD39_DATA_B	<= AD39_DATA;
+			end if;
+		end if;
+	end process;
+
+	AD_ERR	<= '0' when AD0_ERR = '0' and AD1_ERR = '0' and AD2_ERR = '0' and AD3_ERR = '0' and AD4_ERR = '0' and AD5_ERR = '0' and AD6_ERR = '0' and AD7_ERR = '0' and 
+					AD8_ERR = '0' and AD9_ERR = '0' and AD10_ERR = '0' and AD11_ERR = '0' and AD12_ERR = '0' and AD13_ERR = '0' and AD14_ERR = '0' and AD15_ERR = '0' and 
+					AD16_ERR = '0' and AD17_ERR = '0' and AD18_ERR = '0' and AD19_ERR = '0' and AD20_ERR = '0' and AD21_ERR = '0' and AD22_ERR = '0' and AD23_ERR = '0' and 
+					AD24_ERR = '0' and AD25_ERR = '0' and AD26_ERR = '0' and AD27_ERR = '0' and AD28_ERR = '0' and AD29_ERR = '0' and AD30_ERR = '0' and AD31_ERR = '0' and 
+					AD32_ERR = '0' and AD33_ERR = '0' and AD34_ERR = '0' and AD35_ERR = '0' and AD36_ERR = '0' and AD37_ERR = '0' and AD38_ERR = '0' and AD39_ERR = '0'
+				else '1';
+
+	ADC_ERR	<= AD_ERR;
+
+	-- ====================================================
+	-- AD Conversion Control
+	-- ====================================================
+	process(CLK150)
+	begin
+		if CLK150'event and CLK150 = '1' then
+			
+			RESET_B		<= RESET;
+			RESET_200	<= RESET_B;
+			
+			if RESET_200 = '1' then
+				CNT_ADPHASE		<= 0;
+				AD_CS			<= '0';
+				AD_CLK			<= '1';
+			else
+				if CNT_ADPHASE = 70 then
+					CNT_ADPHASE	<= 0;
+				else
+					CNT_ADPHASE	<= CNT_ADPHASE + 1;
+				end if;
+				
+				case CNT_ADPHASE is
+					when 0 => 
+										AD_CS		<= '0';
+										AD_CLK		<= '1';
+					when 6 => 			AD_CS		<= '1';				-- アクイジション時間を40ns確保
+					when 8 => 			AD_CLK		<= '0';				-- 1
+					when 10 => 			AD_CLK		<= '1';
+					when 12 => 			AD_CLK		<= '0';				-- 2
+					when 14 => 			AD_CLK		<= '1';
+					when 16 => 			AD_CLK		<= '0';				-- 3
+					when 18 => 			AD_CLK		<= '1';
+					when 20 => 			AD_CLK		<= '0';				-- 4
+					when 22 => 			AD_CLK		<= '1';
+					when 24 => 			AD_CLK		<= '0';				-- 5
+					when 26 => 			AD_CLK		<= '1';
+					when 28 => 			AD_CLK		<= '0';				-- 6
+					when 30 => 			AD_CLK		<= '1';
+					when 32 => 			AD_CLK		<= '0';				-- 7
+					when 34 => 			AD_CLK		<= '1';
+					when 36 => 			AD_CLK		<= '0';				-- 8
+					when 38 => 			AD_CLK		<= '1';
+					when 40 => 			AD_CLK		<= '0';				-- 9
+					when 42 => 			AD_CLK		<= '1';
+					when 44 => 			AD_CLK		<= '0';				-- 10
+					when 46 => 			AD_CLK		<= '1';
+					when 48 => 			AD_CLK		<= '0';				-- 11
+					when 50 => 			AD_CLK		<= '1';
+					when 52 => 			AD_CLK		<= '0';				-- 12
+					when 54 => 			AD_CLK		<= '1';
+					when 56 => 			AD_CLK		<= '0';				-- 13
+					when 58 => 			AD_CLK		<= '1';
+					when 60 => 			AD_CLK		<= '0';				-- 14
+					when 62 => 			AD_CLK		<= '1';
+					when 64 => 			AD_CLK		<= '0';				-- 15
+					when 66 => 			AD_CLK		<= '1';
+					when 68 => 			AD_CLK		<= '0';				-- 16
+					when 70 => 			AD_CLK		<= '1';
+					when others  => null;
+				end case;
+				
+			end if;
+			
+			AD0_CS_B		<= ADC_GR0_CS;
+			AD0_CS_BB		<= AD0_CS_B;
+			AD0_CS_BBB		<= AD0_CS_BB;
+			
+			AD0_SCLK_B		<= ADC_GR0_SCLK;
+			AD0_SCLK_BB		<= AD0_SCLK_B;
+			AD0_SCLK_BBB	<= AD0_SCLK_BB;
+			
+			ADC0_DATA_B		<= ADC_GR0_DATA;
+			
+			if RESET_200 = '1' then
+				CONV_CNT0	<= 0;
+				
+				AD0_SR0			<= "000000" & "00000000";
+				AD0_SR1			<= "000000" & "00000000";
+				AD0_SR2			<= "000000" & "00000000";
+				AD0_SR3			<= "000000" & "00000000";
+				
+				ADC_GR0_0		<= "000000" & "00000000";
+				ADC_GR0_1		<= "000000" & "00000000";
+				ADC_GR0_2		<= "000000" & "00000000";
+				ADC_GR0_3		<= "000000" & "00000000";
+
+				--追加ver2--
+				Vc_UP1			<= "000000" & "00000000";		--U相上アームコンデンサ電圧Vc
+				Vc_UP2			<= "000000" & "00000000";
+				Vc_UP3			<= "000000" & "00000000";
+				Vc_UP4			<= "000000" & "00000000";
+				-----------
+			else
+				
+				if AD0_CS_BBB = '0' and AD0_CS_BB = '1' then
+					CONV_CNT0	<= 0;
+					CONV_OK		<= '0';
+				elsif AD0_SCLK_BBB = '0' and AD0_SCLK_BB = '1' then
+					AD0_SR0		<= AD0_SR0(12 downto 0) & ADC0_DATA_B(0);
+					AD0_SR1		<= AD0_SR1(12 downto 0) & ADC0_DATA_B(1);
+					AD0_SR2		<= AD0_SR2(12 downto 0) & ADC0_DATA_B(2);
+					AD0_SR3		<= AD0_SR3(12 downto 0) & ADC0_DATA_B(3);
+					CONV_CNT0	<= CONV_CNT0 + 1;
+				elsif CONV_CNT0 = 15 then
+					ADC_GR0_0	<= AD0_SR0;
+					ADC_GR0_1	<= AD0_SR1;
+					ADC_GR0_2	<= AD0_SR2;
+					ADC_GR0_3	<= AD0_SR3;
+					--追加ver2--
+					Vc_UP1		<= AD0_SR0;		--U相上アームコンデンサ電圧Vc
+					Vc_UP2		<= AD0_SR1;
+					Vc_UP3		<= AD0_SR2;
+					Vc_UP4		<= AD0_SR3;
+					-----------
+				elsif CONV_CNT0 = 16 then
+					CONV_OK		<= '1';
+					CONV_CNT0	<= 0;
+				end if;
+			end if;
+			
+			AD1_CS_B		<= ADC_GR1_CS;
+			AD1_CS_BB		<= AD1_CS_B;
+			AD1_CS_BBB		<= AD1_CS_BB;
+			
+			AD1_SCLK_B		<= ADC_GR1_SCLK;
+			AD1_SCLK_BB		<= AD1_SCLK_B;
+			AD1_SCLK_BBB	<= AD1_SCLK_BB;
+			
+			ADC1_DATA_B		<= ADC_GR1_DATA;
+			
+			if RESET_200 = '1' then
+				CONV_CNT1	<= 0;
+				
+				AD1_SR0			<= "000000" & "00000000";
+				AD1_SR1			<= "000000" & "00000000";
+				AD1_SR2			<= "000000" & "00000000";
+				AD1_SR3			<= "000000" & "00000000";
+				
+				ADC_GR1_0		<= "000000" & "00000000";
+				ADC_GR1_1		<= "000000" & "00000000";
+				ADC_GR1_2		<= "000000" & "00000000";
+				ADC_GR1_3		<= "000000" & "00000000";
+				
+				--追加ver2--
+				Vc_UN1			<= "000000" & "00000000";		--U相下アームコンデンサ電圧Vc
+				Vc_UN2			<= "000000" & "00000000";
+				Vc_UN3			<= "000000" & "00000000";
+				Vc_UN4			<= "000000" & "00000000";
+				-----------
+			else
+				
+				if AD1_CS_BBB = '0' and AD1_CS_BB = '1' then
+					CONV_CNT1	<= 0;
+				elsif AD1_SCLK_BBB = '0' and AD1_SCLK_BB = '1' then
+					AD1_SR0		<= AD1_SR0(12 downto 0) & ADC1_DATA_B(0);
+					AD1_SR1		<= AD1_SR1(12 downto 0) & ADC1_DATA_B(1);
+					AD1_SR2		<= AD1_SR2(12 downto 0) & ADC1_DATA_B(2);
+					AD1_SR3		<= AD1_SR3(12 downto 0) & ADC1_DATA_B(3);
+					CONV_CNT1	<= CONV_CNT1 + 1;
+				elsif CONV_CNT1 = 15 then
+					ADC_GR1_0	<= AD1_SR0;
+					ADC_GR1_1	<= AD1_SR1;
+					ADC_GR1_2	<= AD1_SR2;
+					ADC_GR1_3	<= AD1_SR3;
+					--追加ver2--
+					Vc_UN1		<= AD1_SR0;		--U相下アームコンデンサ電圧Vc
+					Vc_UN2		<= AD1_SR1;
+					Vc_UN3		<= AD1_SR2;
+					Vc_UN4		<= AD1_SR3;
+					-----------
+				elsif CONV_CNT1 = 16 then
+					CONV_CNT1	<= 0;
+				end if;
+			end if;
+			
+			AD2_CS_B		<= ADC_GR2_CS;
+			AD2_CS_BB		<= AD2_CS_B;
+			AD2_CS_BBB		<= AD2_CS_BB;
+			
+			AD2_SCLK_B		<= ADC_GR2_SCLK;
+			AD2_SCLK_BB		<= AD2_SCLK_B;
+			AD2_SCLK_BBB	<= AD2_SCLK_BB;
+			
+			ADC2_DATA_B		<= ADC_GR2_DATA;
+			
+			if RESET_200 = '1' then
+				CONV_CNT2	<= 0;
+				
+				AD2_SR0			<= "000000" & "00000000";
+				AD2_SR1			<= "000000" & "00000000";
+				AD2_SR2			<= "000000" & "00000000";
+				AD2_SR3			<= "000000" & "00000000";
+				
+				ADC_GR2_0		<= "000000" & "00000000";
+				ADC_GR2_1		<= "000000" & "00000000";
+				ADC_GR2_2		<= "000000" & "00000000";
+				ADC_GR2_3		<= "000000" & "00000000";
+				
+				--追加ver2--
+				Vc_VP1			<= "000000" & "00000000";		--V相上アームコンデンサ電圧Vc
+				Vc_VP2			<= "000000" & "00000000";
+				Vc_VP3			<= "000000" & "00000000";
+				Vc_VP4			<= "000000" & "00000000";
+				-----------
+			else
+				
+				if AD2_CS_BBB = '0' and AD2_CS_BB = '1' then
+					CONV_CNT2	<= 0;
+				elsif AD2_SCLK_BBB = '0' and AD2_SCLK_BB = '1' then
+					AD2_SR0		<= AD2_SR0(12 downto 0) & ADC2_DATA_B(0);
+					AD2_SR1		<= AD2_SR1(12 downto 0) & ADC2_DATA_B(1);
+					AD2_SR2		<= AD2_SR2(12 downto 0) & ADC2_DATA_B(2);
+					AD2_SR3		<= AD2_SR3(12 downto 0) & ADC2_DATA_B(3);
+					CONV_CNT2	<= CONV_CNT2 + 1;
+				elsif CONV_CNT2 = 15 then
+					ADC_GR2_0	<= AD2_SR0;
+					ADC_GR2_1	<= AD2_SR1;
+					ADC_GR2_2	<= AD2_SR2;
+					ADC_GR2_3	<= AD2_SR3;
+					
+					--追加ver2--
+					Vc_VP1		<= AD2_SR0;		--V相上アームコンデンサ電圧Vc
+					Vc_VP2		<= AD2_SR1;
+					Vc_VP3		<= AD2_SR2;
+					Vc_VP4		<= AD2_SR3;
+					-----------
+				elsif CONV_CNT2 = 16 then
+					CONV_CNT2	<= 0;
+				end if;
+			end if;
+			
+			AD3_CS_B		<= ADC_GR3_CS;
+			AD3_CS_BB		<= AD3_CS_B;
+			AD3_CS_BBB		<= AD3_CS_BB;
+			
+			AD3_SCLK_B		<= ADC_GR3_SCLK;
+			AD3_SCLK_BB		<= AD3_SCLK_B;
+			AD3_SCLK_BBB	<= AD3_SCLK_BB;
+			
+			ADC3_DATA_B		<= ADC_GR3_DATA;
+			
+			if RESET_200 = '1' then
+				CONV_CNT3	<= 0;
+				
+				AD3_SR0			<= "000000" & "00000000";
+				AD3_SR1			<= "000000" & "00000000";
+				AD3_SR2			<= "000000" & "00000000";
+				AD3_SR3			<= "000000" & "00000000";
+				
+				ADC_GR3_0		<= "000000" & "00000000";
+				ADC_GR3_1		<= "000000" & "00000000";
+				ADC_GR3_2		<= "000000" & "00000000";
+				ADC_GR3_3		<= "000000" & "00000000";
+				
+				--追加ver2--
+				Vc_VN1			<= "000000" & "00000000";		--V相下アームコンデンサ電圧Vc
+				Vc_VN2			<= "000000" & "00000000";
+				Vc_VN3			<= "000000" & "00000000";
+				Vc_VN4			<= "000000" & "00000000";
+				-----------
+			else
+				
+				if AD3_CS_BBB = '0' and AD3_CS_BB = '1' then
+					CONV_CNT3	<= 0;
+				elsif AD3_SCLK_BBB = '0' and AD3_SCLK_BB = '1' then
+					AD3_SR0		<= AD3_SR0(12 downto 0) & ADC3_DATA_B(0);
+					AD3_SR1		<= AD3_SR1(12 downto 0) & ADC3_DATA_B(1);
+					AD3_SR2		<= AD3_SR2(12 downto 0) & ADC3_DATA_B(2);
+					AD3_SR3		<= AD3_SR3(12 downto 0) & ADC3_DATA_B(3);
+					CONV_CNT3	<= CONV_CNT3 + 1;
+				elsif CONV_CNT3 = 15 then
+					ADC_GR3_0	<= AD3_SR0;
+					ADC_GR3_1	<= AD3_SR1;
+					ADC_GR3_2	<= AD3_SR2;
+					ADC_GR3_3	<= AD3_SR3;
+					
+					--追加ver2--
+					Vc_VN1		<= AD3_SR0;		--V相下アームコンデンサ電圧Vc
+					Vc_VN2		<= AD3_SR1;
+					Vc_VN3		<= AD3_SR2;
+					Vc_VN4		<= AD3_SR3;
+					-----------
+				elsif CONV_CNT3 = 16 then
+					CONV_CNT3	<= 0;
+				end if;
+			end if;
+			
+			AD4_CS_B		<= ADC_GR4_CS;
+			AD4_CS_BB		<= AD4_CS_B;
+			AD4_CS_BBB		<= AD4_CS_BB;
+			
+			AD4_SCLK_B		<= ADC_GR4_SCLK;
+			AD4_SCLK_BB		<= AD4_SCLK_B;
+			AD4_SCLK_BBB	<= AD4_SCLK_BB;
+			
+			ADC4_DATA_B		<= ADC_GR4_DATA;
+			
+			if RESET_200 = '1' then
+				CONV_CNT4	<= 0;
+				
+				AD4_SR0			<= "000000" & "00000000";
+				AD4_SR1			<= "000000" & "00000000";
+				AD4_SR2			<= "000000" & "00000000";
+				AD4_SR3			<= "000000" & "00000000";
+				
+				ADC_GR4_0		<= "000000" & "00000000";
+				ADC_GR4_1		<= "000000" & "00000000";
+				ADC_GR4_2		<= "000000" & "00000000";
+				ADC_GR4_3		<= "000000" & "00000000";
+				
+				--追加ver2--
+				Vc_WP1			<= "000000" & "00000000";		--W相上アームコンデンサ電圧Vc
+				Vc_WP2			<= "000000" & "00000000";
+				Vc_WP3			<= "000000" & "00000000";
+				Vc_WP4			<= "000000" & "00000000";
+				-----------
+			else
+				
+				if AD4_CS_BBB = '0' and AD4_CS_BB = '1' then
+					CONV_CNT4	<= 0;
+				elsif AD4_SCLK_BBB = '0' and AD4_SCLK_BB = '1' then
+					AD4_SR0		<= AD4_SR0(12 downto 0) & ADC4_DATA_B(0);
+					AD4_SR1		<= AD4_SR1(12 downto 0) & ADC4_DATA_B(1);
+					AD4_SR2		<= AD4_SR2(12 downto 0) & ADC4_DATA_B(2);
+					AD4_SR3		<= AD4_SR3(12 downto 0) & ADC4_DATA_B(3);
+					CONV_CNT4	<= CONV_CNT4 + 1;
+				elsif CONV_CNT4 = 15 then
+					ADC_GR4_0	<= AD4_SR0;
+					ADC_GR4_1	<= AD4_SR1;
+					ADC_GR4_2	<= AD4_SR2;
+					ADC_GR4_3	<= AD4_SR3;
+					
+					--追加ver2--
+					Vc_WP1		<= AD4_SR0;		--W相上アームコンデンサ電圧Vc
+					Vc_WP2		<= AD4_SR1;
+					Vc_WP3		<= AD4_SR2;
+					Vc_WP4		<= AD4_SR3;
+					-----------
+				elsif CONV_CNT4 = 16 then
+					CONV_CNT4	<= 0;
+				end if;
+			end if;
+			
+			AD5_CS_B		<= ADC_GR5_CS;
+			AD5_CS_BB		<= AD5_CS_B;
+			AD5_CS_BBB		<= AD5_CS_BB;
+			
+			AD5_SCLK_B		<= ADC_GR5_SCLK;
+			AD5_SCLK_BB		<= AD5_SCLK_B;
+			AD5_SCLK_BBB	<= AD5_SCLK_BB;
+			
+			ADC5_DATA_B		<= ADC_GR5_DATA;
+			
+			if RESET_200 = '1' then
+				CONV_CNT5	<= 0;
+				
+				AD5_SR0			<= "000000" & "00000000";
+				AD5_SR1			<= "000000" & "00000000";
+				AD5_SR2			<= "000000" & "00000000";
+				AD5_SR3			<= "000000" & "00000000";
+				
+				ADC_GR5_0		<= "000000" & "00000000";
+				ADC_GR5_1		<= "000000" & "00000000";
+				ADC_GR5_2		<= "000000" & "00000000";
+				ADC_GR5_3		<= "000000" & "00000000";
+				
+				--追加ver2--
+				Vc_WN1			<= "000000" & "00000000";		--W相下アームコンデンサ電圧Vc
+				Vc_WN2			<= "000000" & "00000000";
+				Vc_WN3			<= "000000" & "00000000";
+				Vc_WN4			<= "000000" & "00000000";
+				-----------
+			else
+				
+				if AD5_CS_BBB = '0' and AD5_CS_BB = '1' then
+					CONV_CNT5	<= 0;
+				elsif AD5_SCLK_BBB = '0' and AD5_SCLK_BB = '1' then
+					AD5_SR0		<= AD5_SR0(12 downto 0) & ADC5_DATA_B(0);
+					AD5_SR1		<= AD5_SR1(12 downto 0) & ADC5_DATA_B(1);
+					AD5_SR2		<= AD5_SR2(12 downto 0) & ADC5_DATA_B(2);
+					AD5_SR3		<= AD5_SR3(12 downto 0) & ADC5_DATA_B(3);
+					CONV_CNT5	<= CONV_CNT5 + 1;
+				elsif CONV_CNT5 = 15 then
+					ADC_GR5_0	<= AD5_SR0;
+					ADC_GR5_1	<= AD5_SR1;
+					ADC_GR5_2	<= AD5_SR2;
+					ADC_GR5_3	<= AD5_SR3;
+					
+					--追加ver2--
+					Vc_WN1		<= AD5_SR0;		--W相下アームコンデンサ電圧Vc
+					Vc_WN2		<= AD5_SR1;
+					Vc_WN3		<= AD5_SR2;
+					Vc_WN4		<= AD5_SR3;
+					-----------
+				elsif CONV_CNT5 = 16 then
+					CONV_CNT5	<= 0;
+				end if;
+			end if;
+			
+			AD6_CS_B		<= ADC_GR6_CS;
+			AD6_CS_BB		<= AD6_CS_B;
+			AD6_CS_BBB		<= AD6_CS_BB;
+			
+			AD6_SCLK_B		<= ADC_GR6_SCLK;
+			AD6_SCLK_BB		<= AD6_SCLK_B;
+			AD6_SCLK_BBB	<= AD6_SCLK_BB;
+			
+			ADC6_DATA_B		<= ADC_GR6_DATA;
+			
+			if RESET_200 = '1' then
+				CONV_CNT6	<= 0;
+				
+				AD6_SR0			<= "000000" & "00000000";
+				AD6_SR1			<= "000000" & "00000000";
+				AD6_SR2			<= "000000" & "00000000";
+				AD6_SR3			<= "000000" & "00000000";
+				
+				ADC_GR6_0		<= "000000" & "00000000";
+				ADC_GR6_1		<= "000000" & "00000000";
+				ADC_GR6_2		<= "000000" & "00000000";
+				ADC_GR6_3		<= "000000" & "00000000";
+				
+				--追加ver2--
+				Vdc				<= "000000" & "00000000";		--直流電源電圧Vdc
+				Vuv_mmc			<= "000000" & "00000000";		--MMC出力線間電圧Vo_mmc
+				Vwu_mmc			<= "000000" & "00000000";
+				Vvw_mmc			<= "000000" & "00000000";
+				-----------
+			else
+				
+				if AD6_CS_BBB = '0' and AD6_CS_BB = '1' then
+					CONV_CNT6	<= 0;
+				elsif AD6_SCLK_BBB = '0' and AD6_SCLK_BB = '1' then
+					AD6_SR0		<= AD6_SR0(12 downto 0) & ADC6_DATA_B(0);
+					AD6_SR1		<= AD6_SR1(12 downto 0) & ADC6_DATA_B(1);
+					AD6_SR2		<= AD6_SR2(12 downto 0) & ADC6_DATA_B(2);
+					AD6_SR3		<= AD6_SR3(12 downto 0) & ADC6_DATA_B(3);
+					CONV_CNT6	<= CONV_CNT6 + 1;
+				elsif CONV_CNT6 = 15 then
+					ADC_GR6_0	<= AD6_SR0;
+					ADC_GR6_1	<= AD6_SR1;
+					ADC_GR6_2	<= AD6_SR2;
+					ADC_GR6_3	<= AD6_SR3;
+					
+					--追加ver2--
+					Vdc			<= AD6_SR0;		--直流電源電圧Vdc
+					Vuv_mmc		<= AD6_SR1;		--MMC出力線間電圧Vo_mmc
+					Vwu_mmc		<= AD6_SR2;
+					Vvw_mmc		<= AD6_SR3;
+					-----------
+				elsif CONV_CNT6 = 16 then
+					CONV_CNT6	<= 0;
+				end if;
+			end if;
+			
+			AD7_CS_B		<= ADC_GR7_CS;
+			AD7_CS_BB		<= AD7_CS_B;
+			AD7_CS_BBB		<= AD7_CS_BB;
+			
+			AD7_SCLK_B		<= ADC_GR7_SCLK;
+			AD7_SCLK_BB		<= AD7_SCLK_B;
+			AD7_SCLK_BBB	<= AD7_SCLK_BB;
+			
+			ADC7_DATA_B		<= ADC_GR7_DATA;
+			
+			if RESET_200 = '1' then
+				CONV_CNT7	<= 0;
+				
+				AD7_SR0			<= "000000" & "00000000";
+				AD7_SR1			<= "000000" & "00000000";
+				AD7_SR2			<= "000000" & "00000000";
+				AD7_SR3			<= "000000" & "00000000";
+				
+				ADC_GR7_0		<= "000000" & "00000000";
+				ADC_GR7_1		<= "000000" & "00000000";
+				ADC_GR7_2		<= "000000" & "00000000";
+				ADC_GR7_3		<= "000000" & "00000000";
+				
+				--追加ver2--
+				Vwu_inv			<= "000000" & "00000000";		--インバータ出力線間電圧Vo_inv
+				Vvw_inv			<= "000000" & "00000000";
+				Vuv_inv			<= "000000" & "00000000";
+				Iz_UP				<= "000000" & "00000000";		--U相上アーム電流
+				-----------
+			else
+				
+				if AD7_CS_BBB = '0' and AD7_CS_BB = '1' then
+					CONV_CNT7	<= 0;
+				elsif AD7_SCLK_BBB = '0' and AD7_SCLK_BB = '1' then
+					AD7_SR0		<= AD7_SR0(12 downto 0) & ADC7_DATA_B(0);
+					AD7_SR1		<= AD7_SR1(12 downto 0) & ADC7_DATA_B(1);
+					AD7_SR2		<= AD7_SR2(12 downto 0) & ADC7_DATA_B(2);
+					AD7_SR3		<= AD7_SR3(12 downto 0) & ADC7_DATA_B(3);
+					CONV_CNT7	<= CONV_CNT7 + 1;
+				elsif CONV_CNT7 = 15 then
+					ADC_GR7_0	<= AD7_SR0;
+					ADC_GR7_1	<= AD7_SR1;
+					ADC_GR7_2	<= AD7_SR2;
+					ADC_GR7_3	<= AD7_SR3;
+					
+					--追加ver2--
+					Vwu_inv		<= AD7_SR0;		--インバータ出力線間電圧Vo_inv
+					Vvw_inv		<= AD7_SR1;		
+					Vuv_inv		<= AD7_SR2;
+					Iz_UP			<= AD7_SR3;		--U相上アーム電流
+					-----------
+				elsif CONV_CNT7 = 16 then
+					CONV_CNT7	<= 0;
+				end if;
+			end if;
+			
+			AD8_CS_B		<= ADC_GR8_CS;
+			AD8_CS_BB		<= AD8_CS_B;
+			AD8_CS_BBB		<= AD8_CS_BB;
+			
+			AD8_SCLK_B		<= ADC_GR8_SCLK;
+			AD8_SCLK_BB		<= AD8_SCLK_B;
+			AD8_SCLK_BBB	<= AD8_SCLK_BB;
+			
+			ADC8_DATA_B		<= ADC_GR8_DATA;
+			
+			if RESET_200 = '1' then
+				CONV_CNT8	<= 0;
+				
+				AD8_SR0			<= "000000" & "00000000";
+				AD8_SR1			<= "000000" & "00000000";
+				AD8_SR2			<= "000000" & "00000000";
+				AD8_SR3			<= "000000" & "00000000";
+				
+				ADC_GR8_0		<= "000000" & "00000000";
+				ADC_GR8_1		<= "000000" & "00000000";
+				ADC_GR8_2		<= "000000" & "00000000";
+				ADC_GR8_3		<= "000000" & "00000000";
+				
+				--追加ver2--
+				Iz_VP				<= "000000" & "00000000";		--V相上アーム電流
+				Iz_WP				<= "000000" & "00000000";		--W相上アーム電流
+				Iz_UN				<= "000000" & "00000000";		--U相下アーム電流
+				Iz_VN				<= "000000" & "00000000";		--V相下アーム電流
+				-----------
+			else
+				
+				if AD8_CS_BBB = '0' and AD8_CS_BB = '1' then
+					CONV_CNT8	<= 0;
+				elsif AD8_SCLK_BBB = '0' and AD8_SCLK_BB = '1' then
+					AD8_SR0		<= AD8_SR0(12 downto 0) & ADC8_DATA_B(0);
+					AD8_SR1		<= AD8_SR1(12 downto 0) & ADC8_DATA_B(1);
+					AD8_SR2		<= AD8_SR2(12 downto 0) & ADC8_DATA_B(2);
+					AD8_SR3		<= AD8_SR3(12 downto 0) & ADC8_DATA_B(3);
+					CONV_CNT8	<= CONV_CNT8 + 1;
+				elsif CONV_CNT8 = 15 then
+					ADC_GR8_0	<= AD8_SR0;
+					ADC_GR8_1	<= AD8_SR1;
+					ADC_GR8_2	<= AD8_SR2;
+					ADC_GR8_3	<= AD8_SR3;
+					
+					--追加ver2--
+					Iz_VP			<= AD8_SR0;		--V相上アーム電流
+					Iz_WP			<= AD8_SR1;		--W相上アーム電流
+					Iz_UN			<= AD8_SR2;		--U相下アーム電流
+					Iz_VN			<= AD8_SR3;		--V相下アーム電流
+					-----------
+				elsif CONV_CNT8 = 16 then
+					CONV_CNT8	<= 0;
+				end if;
+			end if;
+			
+			AD9_CS_B		<= ADC_GR9_CS;
+			AD9_CS_BB		<= AD9_CS_B;
+			AD9_CS_BBB		<= AD9_CS_BB;
+			
+			AD9_SCLK_B		<= ADC_GR9_SCLK;
+			AD9_SCLK_BB		<= AD9_SCLK_B;
+			AD9_SCLK_BBB	<= AD9_SCLK_BB;
+			
+			ADC9_DATA_B		<= ADC_GR9_DATA;
+			
+			if RESET_200 = '1' then
+				CONV_CNT9	<= 0;
+				
+				AD9_SR0			<= "000000" & "00000000";
+				AD9_SR1			<= "000000" & "00000000";
+				AD9_SR2			<= "000000" & "00000000";
+				AD9_SR3			<= "000000" & "00000000";
+				
+				ADC_GR9_0		<= "000000" & "00000000";
+				ADC_GR9_1		<= "000000" & "00000000";
+				ADC_GR9_2		<= "000000" & "00000000";
+				ADC_GR9_3		<= "000000" & "00000000";
+				
+				--追加ver2--
+				Iz_WN				<= "000000" & "00000000";		--W相下アーム電流
+				IU_inv			<= "000000" & "00000000";		--インバータ出力電流Io_inv
+				IV_inv			<= "000000" & "00000000";
+				IW_inv			<= "000000" & "00000000";
+				-----------
+			else
+				
+				if AD9_CS_BBB = '0' and AD9_CS_BB = '1' then
+					CONV_CNT9	<= 0;
+				elsif AD9_SCLK_BBB = '0' and AD9_SCLK_BB = '1' then
+					AD9_SR0		<= AD9_SR0(12 downto 0) & ADC9_DATA_B(0);
+					AD9_SR1		<= AD9_SR1(12 downto 0) & ADC9_DATA_B(1);
+					AD9_SR2		<= AD9_SR2(12 downto 0) & ADC9_DATA_B(2);
+					AD9_SR3		<= AD9_SR3(12 downto 0) & ADC9_DATA_B(3);
+					CONV_CNT9	<= CONV_CNT9 + 1;
+				elsif CONV_CNT9 = 15 then
+					ADC_GR9_0	<= AD9_SR0;
+					ADC_GR9_1	<= AD9_SR1;
+					ADC_GR9_2	<= AD9_SR2;
+					ADC_GR9_3	<= AD9_SR3;
+					
+					--追加ver2--
+					Iz_WN			<= AD9_SR0;		--W相下アーム電流
+					IU_inv		<= AD9_SR1;		--インバータ出力電流Io_inv
+					IV_inv		<= AD9_SR2;		
+					IW_inv		<= AD9_SR3;		
+					-----------
+				elsif CONV_CNT9 = 16 then
+					CONV_CNT9	<= 0;
+				end if;
+			end if;
+
+		end if;
+	end process;
+
+
+end Behavioral;
+
+
+
+\end{mylisting}

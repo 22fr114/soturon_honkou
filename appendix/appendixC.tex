@@ -1,0 +1,37 @@
+%Root main.tex
+%---------------------------------------------------------------------------
+%付録A　付録
+%---------------------------------------------------------------------------
+
+\chapter{生成したHDLコードの仕様}
+\thispagestyle{fancy}
+\label{chap:コード}
+\section{MSDB\_Control}
+トップモジュール(Simulink全体)であり，入出力の信号名、ビット数などを定義している．入出力を表\ref{for:MSDB_Control}に示す．
+\begin{table}[h]
+ \center
+ \caption{MSDB\_Controlポート一覧}
+ \label{for:MSDB_Control}
+ \small
+ \begin{tabular}{c|c|c|c} \hline \hline
+  信号名            &   方向    &   bit幅   &   説明   \\ \hline
+  Omega\_Rpm\_Digital &   In      &   16      &   モータ回転数   \\ \hline
+  Count\_2500       &   In      &   16      &   カウンタ信号   \\ \hline
+  I\_d              &   In      &   16      &   d軸実電流   \\ \hline
+  I\_q              &   In      &   16      &   q軸実電流   \\ \hline
+  I\_dref           &   In      &   16      &   d軸指令電流   \\ \hline
+  I\_qref           &   In      &   16      &   q軸指令電流   \\ \hline
+  Vd                &   Out     &   16      &   d軸操作量   \\ \hline
+  Vq                &   Out     &   16      &   q軸操作量   \\ \hline
+ \end{tabular}
+\end{table}
+
+%\inputminted{vhdl}{image/appendixC/MSDB_Control.vhd}
+\begin{center}
+\label{lisC.1}
+    ソースコードC.1：DC-MSSRDB\_Control
+\lstinputlisting[language=C]{image/appendixC/MSDB_Control.vhd}
+\end{center}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+

@@ -1,0 +1,65 @@
+%Root main.tex
+%---------------------------------------------------------------------------
+%付録A　付録
+%---------------------------------------------------------------------------
+
+%\lstnewenvironment{mylisting}[1][]
+%    {\lstset{
+%        frame=single,
+%        numbersep=10pt,
+%        tabsize=2,
+%        #1
+%    }
+%}{}
+\begin{mylisting}[language=c,caption=hold\_function2,label=appC_hold_func1]
+function y1  = fcn(u1,cnt)
+\%永続変数の定義
+persistent y1\_buf;
+
+\%初期化
+if isempty(y1\_buf)
+    y1\_buf = 0;
+end
+
+\%演算
+if(cnt == 0)
+    y1 = u1;
+    y1\_buf = u1;
+else
+    y1 = y1\_buf;
+end
+
+\end{mylisting}
+
+リスト\ref{appC_hold_func1}はキャリアカウンタであるcntが0の時のみ値を更新し，cntが0以外の場合は，0の時点での値を出力する内容となっている．hold\_function\_thetaも同様となっている．hold\_function\_thetaのプログラムを以下に示す．
+
+
+\begin{mylisting}[language=c,caption=hold\_function\_theta,label=appC_hold_func2]
+function out  = fcn(in1,cnt,sector)
+\%永続変数の定義
+persistent in1\_buf sector\_buf;
+
+\%初期化
+if isempty(in1\_buf)
+    in1\_buf = 0;
+end
+
+if isempty(sector\_buf)
+    sector\_buf = 0;
+end
+
+\%演算
+if(cnt == 0)
+    sector\_buf = sector;
+    in1\_buf = in1;
+    out = in1;
+else
+    if(sector == sector\_buf)
+        out = in1;
+        in1\_buf = in1;
+    else
+        out = in1\_buf;
+    end
+end
+
+\end{mylisting}

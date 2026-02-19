@@ -1,0 +1,318 @@
+%Root main.tex
+%---------------------------------------------------------------------------
+%付録A　付録
+%---------------------------------------------------------------------------
+
+\lstnewenvironment{mylisting}[1][]
+    {\lstset{
+        frame=single,
+        numbersep=10pt,
+        tabsize=2,
+        #1
+    }
+}{}
+\begin{mylisting}[language=c,caption=SRDBControlブロック:宣言文,label=SRDBcontrolD]
+#include<stdlib.h>
+#include<math.h>
+
+#define cnt DiscState(0)
+//#define svm_t DiscState(1)
+#define theta_update DiscState(1)
+#define theta_update_k1 DiscState(2)
+#define Ti_buff DiscState(3)
+#define Tj_buff DiscState(4)
+#define Ti_buff_k1 DiscState(5)
+#define Tj_buff_k1 DiscState(6)
+#define T1_buff DiscState(7)
+#define T2_buff DiscState(8)
+#define T1_buff_k1 DiscState(9)
+#define T2_buff_k1 DiscState(10)
+#define T3_buff DiscState(11)
+#define T4_buff DiscState(12)
+#define T3_buff_k1 DiscState(13)
+#define T4_buff_k1 DiscState(14)
+#define T_zero_buff DiscState(15)
+#define T_zero_buff_k1 DiscState(16)
+#define svm_t_buff DiscState(17)
+#define svm_t_k1 DiscState(18)
+\end{mylisting}
+
+\begin{mylisting}[language=c,caption=SRDBControlブロック:出力関数,label=SRDBcontrolE]
+double ua,ub;
+double theta,theta_1,theta_deg;
+int UP,UN,VP,VN,WP,WN;
+double sector;
+double Ti,Tj,T_zero,T1,T2,T3,T4;
+double M_PI = 3.14159264;
+double T = 1.0/(20000);
+double svm_t;
+
+ua = Input(0);
+ub = Input(1);
+
+/***theta導出****/
+if(cnt == 0){
+	theta = atan2(ub,ua);
+	if(theta >= 0){
+		theta_1 = theta;
+		theta_deg = (180.0 / M_PI) * theta_1;
+
+	}else{
+		theta_1 = 2*M_PI + theta;
+		theta_deg = (180.0 / M_PI) * theta_1;
+	}
+	theta_update = theta_deg;
+}
+else{
+	theta_deg = theta_update_k1;
+}
+/****************/
+/*******SVM*******/
+
+svm_t = svm_t_k1/2000000;
+
+//セクタ1
+if((0.0< theta_deg) && (theta_deg <= 60.0)){
+	sector = 1;
+	if(cnt == 0.0){
+		Ti = (3.0 / 2.0) * (ua - (ub / sqrt(3.0)));
+		Tj = (3.0 / 2.0) * (2.0 * (ub / sqrt(3.0)));
+		T_zero = (T - (Ti + Tj)) * 0.5;
+		T1 = T_zero;
+		T2 = T_zero + (Ti * 0.5);
+		T3 = T_zero + (Ti * 0.5) + Tj;
+		T4 = T_zero + Ti + Tj;
+		Ti_buff = Ti;
+		Tj_buff = Tj;
+		T1_buff = T1;
+		T2_buff = T2;
+		T3_buff = T3;
+		T4_buff = T4;
+		T_zero_buff = T_zero;
+	}
+	if(svm_t < T1_buff_k1){
+		UP = 0,VP = 0,WP = 0,UN = 1,VN = 1,WN = 1;
+	}
+	else if((T1_buff_k1 < svm_t) && (svm_t <= T2_buff_k1)){
+		UP = 1,VP = 0,WP = 0,UN = 0,VN = 1,WN = 1;
+	}
+	else if((T2_buff_k1 < svm_t) && (svm_t <= T3_buff_k1)){
+		UP = 1,VP = 1,WP = 0,UN = 0,VN = 0,WN = 1;
+	}
+	else if((T3_buff_k1 < svm_t) && (svm_t <= T4_buff_k1)){
+		UP = 1,VP = 0,WP = 0,UN = 0,VN = 1,WN = 1;
+	}
+	else if((T4_buff_k1 < svm_t) && (svm_t <= T)){
+		UP = 0,VP = 0,WP = 0,UN = 1,VN = 1,WN = 1;
+	}
+
+}
+//セクタ2
+else if((60.0 < theta_deg) && (theta_deg <= 120.0)){
+	sector = 2;
+	if(cnt == 0.0){
+		Ti = (3.0 / 2.0) * (-ua + (ub / sqrt(3.0)));
+		Tj = (3.0 / 2.0) * (ua + (ub / sqrt(3.0)));
+		T_zero = (T - (Ti + Tj)) * 0.5;
+		T1 = T_zero;
+		T2 = T_zero + (Ti * 0.5);
+		T3 = T_zero + (Ti * 0.5) + Tj;
+		T4 = T_zero + Ti + Tj;
+		Ti_buff = Ti;
+		Tj_buff = Tj;
+		T1_buff = T1;
+		T2_buff = T2;
+		T3_buff = T3;
+		T4_buff = T4;
+		T_zero_buff = T_zero;
+		
+	}
+	if(svm_t < T1_buff_k1){
+		UP = 0,VP = 0,WP = 0,UN = 1,VN = 1,WN = 1;
+	}
+	else if((T1_buff_k1 < svm_t) && (svm_t <= T2_buff_k1)){
+		UP = 0,VP = 1,WP = 0,UN = 1,VN = 0,WN = 1;
+	}
+	else if((T2_buff_k1 < svm_t) && (svm_t <= T3_buff_k1)){
+		UP = 1,VP = 1,WP = 0,UN = 0,VN = 0,WN = 1;
+	}
+	else if((T3_buff_k1 < svm_t) && (svm_t <= T4_buff_k1)){
+		UP = 0,VP = 1,WP = 0,UN = 1,VN = 0,WN = 1;	
+	}
+	else if((T4_buff_k1 < svm_t) && (svm_t <= T)){
+		UP = 0,VP = 0,WP = 0,UN = 1,VN = 1,WN = 1;	
+	}
+
+}
+//セクタ3
+else if((120.0 < theta_deg) && (theta_deg <= 180.0)){
+	sector = 3;
+	if(cnt == 0.0){
+		Ti = (3.0 / 2.0) * (2.0 * (ub / sqrt(3.0)));
+		Tj = (3.0 / 2.0) * (-ua - (ub / sqrt(3.0)));
+		T_zero = (T - (Ti + Tj)) * 0.5;
+		T1 = T_zero;
+		T2 = T_zero + (Ti * 0.5);
+		T3 = T_zero + (Ti * 0.5) + Tj;
+		T4 = T_zero + Ti + Tj;
+	   Ti_buff = Ti;
+		Tj_buff = Tj;
+		T1_buff = T1;
+		T2_buff = T2;
+		T3_buff = T3;
+		T4_buff = T4;
+		T_zero_buff = T_zero;
+	}
+	if(svm_t < T1_buff_k1){
+		UP = 0,VP = 0,WP = 0,UN = 1,VN = 1,WN = 1;
+	}
+	else if((T1_buff_k1 < svm_t) && (svm_t <= T2_buff_k1)){
+		UP = 0,VP = 1,WP = 0,UN = 1,VN = 0,WN = 1;
+	}
+	else if((T2_buff_k1 < svm_t) && (svm_t <= T3_buff_k1)){
+		UP = 0,VP = 1,WP = 1,UN = 1,VN = 0,WN = 0;
+	}
+	else if((T3_buff_k1 < svm_t) && (svm_t <= T4_buff_k1)){
+		UP = 0,VP = 1,WP = 0,UN = 1,VN = 0,WN = 1;
+	}
+	else if((T4_buff_k1 < svm_t) && (svm_t <= T)){
+		UP = 0,VP = 0,WP = 0,UN = 1,VN = 1,WN = 1;	
+	}
+
+}
+//セクタ4
+else if((180.0 < theta_deg) && (theta_deg <= 240.0)){
+	sector = 4;
+	if(cnt == 0.0){
+		Ti = (3.0 / 2.0) * (-2.0 * (ub / sqrt(3.0)));
+		Tj = (3.0 / 2.0) * (-ua + (ub / sqrt(3.0)));
+		T_zero = (T - (Ti + Tj)) * 0.5;
+		T1 = T_zero;
+		T2 = T_zero + (Ti * 0.5);
+		T3 = T_zero + (Ti * 0.5) + Tj;
+		T4 = T_zero + Ti + Tj;
+		Ti_buff = Ti;
+		Tj_buff = Tj;
+		T1_buff = T1;
+		T2_buff = T2;
+		T3_buff = T3;
+		T4_buff = T4;
+		T_zero_buff = T_zero;
+	}
+	if(svm_t < T1_buff_k1){
+		UP = 0,VP = 0,WP = 0,UN = 1,VN = 1,WN = 1;
+	}
+	else if((T1_buff_k1 < svm_t) && (svm_t <= T2_buff_k1)){
+		UP = 0,VP = 0,WP = 1,UN = 1,VN = 1,WN = 0;	
+	}
+	else if((T2_buff_k1 < svm_t) && (svm_t <= T3_buff_k1)){
+		UP = 0,VP = 1,WP = 1,UN = 1,VN = 0,WN = 0;
+	}
+	else if((T3_buff_k1 < svm_t) && (svm_t <= T4_buff_k1)){
+		UP = 0,VP = 0,WP = 1,UN = 1,VN = 1,WN = 0;
+	}
+	else if((T4_buff_k1 < svm_t) && (svm_t <= T)){
+		UP = 0,VP = 0,WP = 0,UN = 1,VN = 1,WN = 1;
+	}
+
+}
+//セクタ5
+else if((240.0 < theta_deg) && (theta_deg <= 300.0)){
+	sector = 5;
+	if(cnt == 0.0){
+		Ti = (3.0 / 2.0) * (-ua - (ub / sqrt(3.0)));
+		Tj = (3.0 / 2.0) * (ua - (ub / sqrt(3.0)));
+		T_zero = (T - (Ti + Tj)) * 0.5;
+		T1 = T_zero;
+		T2 = T_zero + (Ti * 0.5);
+		T3 = T_zero + (Ti * 0.5) + Tj;
+		T4 = T_zero + Ti + Tj;
+		Ti_buff = Ti;
+		Tj_buff = Tj;
+		T1_buff = T1;
+		T2_buff = T2;
+		T3_buff = T3;
+		T4_buff = T4;
+		T_zero_buff = T_zero;
+	}
+	if(svm_t < T1_buff_k1){
+		UP = 0,VP = 0,WP = 0,UN = 1,VN = 1,WN = 1;
+	}
+	else if((T1_buff_k1 < svm_t) && (svm_t <= T2_buff_k1)){
+		UP = 0,VP = 0,WP = 1,UN = 1,VN = 1,WN = 0;
+	}
+	else if((T2_buff_k1 < svm_t) && (svm_t <= T3_buff_k1)){
+		UP = 1,VP = 0,WP = 1,UN = 0,VN = 1,WN = 0;
+	}
+	else if((T3_buff_k1 < svm_t) && (svm_t <= T4_buff_k1)){
+		UP = 0,VP = 0,WP = 1,UN = 1,VN = 1,WN = 0;
+	}
+	else if((T4_buff_k1 < svm_t) && (svm_t <= T)){
+		UP = 0,VP = 0,WP = 0,UN = 1,VN = 1,WN = 1;
+	}
+
+}
+//セクタ6
+else if((300.0 < theta_deg) && (theta_deg <= 360.0)){
+	sector = 6;
+	if(cnt == 0.0){
+		Ti = (3.0 / 2.0) * (ua + (ub / sqrt(3.0)));
+		Tj = (3.0 / 2.0) * (-2.0 * (ub / sqrt(3.0)));
+		T_zero = (T - (Ti + Tj)) * 0.5;
+		T1 = T_zero;
+		T2 = T_zero + (Ti * 0.5);
+		T3 = T_zero + (Ti * 0.5) + Tj;
+		T4 = T_zero + Ti + Tj;
+		Ti_buff = Ti;
+		Tj_buff = Tj;
+		T1_buff = T1;
+		T2_buff = T2;
+		T3_buff = T3;
+		T4_buff = T4;
+		T_zero_buff = T_zero;
+	}
+	if(svm_t < T1_buff_k1){
+		UP = 0,VP = 0,WP = 0,UN = 1,VN = 1,WN = 1;
+	}
+	else if((T1_buff_k1 < svm_t) && (svm_t <= T2_buff_k1)){
+		UP = 1,VP = 0,WP = 0,UN = 0,VN = 1,WN = 1;
+	}
+	else if((T2_buff_k1 < svm_t) && (svm_t <= T3_buff_k1)){
+		UP = 1,VP = 0,WP = 1,UN = 0,VN = 1,WN = 0;	
+	}
+	else if((T3_buff_k1 < svm_t) && (svm_t <= T4_buff_k1)){
+		UP = 1,VP = 0,WP = 0,UN = 0,VN = 1,WN = 1;
+	}
+	else if((T4_buff_k1 < svm_t) && (svm_t <= T)){
+		UP = 0,VP = 0,WP = 0,UN = 1,VN = 1,WN = 1;
+	}
+}
+svm_t_buff = svm_t_k1;
+
+Output(0) = UP;
+Output(1) = UN;
+Output(2) = VP;
+Output(3) = VN;
+Output(4) = WP;
+Output(5) = WN;
+Output(6) = sector;
+\end{mylisting}
+
+\begin{mylisting}[language=c,caption=SRDBControlブロック:更新関数,label=SRDBcontrolF]
+if(cnt == 99){
+	cnt = 0;
+	svm_t_k1  = 0.0;
+	}else{
+	 cnt = cnt + 1;
+	 svm_t_k1 = svm_t_buff + 1;
+	 }
+	 
+	 theta_update_k1 = theta_update;
+	 Ti_buff_k1 = Ti_buff;
+	 Tj_buff_k1 = Tj_buff;
+	 T1_buff_k1 = T1_buff;
+	 T2_buff_k1 = T2_buff;
+	 T3_buff_k1 = T3_buff;
+	 T4_buff_k1 = T4_buff;
+	 T_zero_buff_k1 = T_zero_buff;
+\end{mylisting}

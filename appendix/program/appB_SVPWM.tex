@@ -1,0 +1,344 @@
+%Root main.tex
+%---------------------------------------------------------------------------
+%付録A　付録
+%---------------------------------------------------------------------------
+
+%\lstnewenvironment{mylisting}[1][]
+%    {\lstset{
+%        frame=single,
+%        numbersep=10pt,
+%        tabsize=2,
+%        #1
+%    }
+%}{}
+\begin{mylisting}[language=c,caption=SVPWMモジュール,label=hurokuB_SVPWM]
+
+#include <Stdlib.h>
+#include <String.h>
+#include <math.h>
+#include <Psim.h>
+
+// PLACE GLOBAL VARIABLES OR USER FUNCTIONS HERE...
+int n = 5;
+//double E = 116;//1.18/100;;//116;
+//OPEN or PI
+//double E = 200/(sqrt(3));//1.18/100;;//116;
+//MSSRDBDC
+double E = 2.0e-4;//1.1547e-4;//0.10235;//1.1547e-4;//0.0000036084;//
+int cnt=0;
+int cnt_max = 200;
+
+double Ts,Tc;
+double fs,fc;
+
+double ua,ub;
+double sector,type;
+double theta_deg,theta,theta_PI;
+double ma,ma_l,ma_buf;
+double ua_1,ub_1,theta_1;
+int H,L,R;
+double t1,t2,t0;
+int UP,UN,VP,VN,WP,WN;
+double T0,T1,T2,T3,T4,T5,T6,Tlevel;
+double T1_buf,T2_buf,T3_buf,T4_buf,T5_buf,T6_buf;
+double svm_t,Tcnt;
+double SU,SV,SW;
+
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationStep
+//   This function runs at every time step.
+//double t: (read only) time
+//double delt: (read only) time step as in Simulation control
+//double *in: (read only) zero based array of input values. in[0] is the first node, in[1] second input...
+//double *out: (write only) zero based array of output values. out[0] is the first node, out[1] second output...
+//int *pnError: (write only)  assign  *pnError = 1;  if there is an error and set the error message in szErrorMsg
+//    strcpy(szErrorMsg, "Error message here..."); 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationStep(
+		double t, double delt, double *in, double *out,
+		 int *pnError, char * szErrorMsg,
+		 void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+// ENTER YOUR CODE HERE...
+//入力
+ua = in[0];
+ub = in[1];
+Ts = in[2];
+Tc = in[3];
+
+Tcnt = Tc/cnt_max;
+
+//非MSの場合はカウンタ = 0の時のみ演算する
+if(cnt == 0.0){
+
+/***操作量の比較によりセクタ導出****/
+if(ua>=0&&ub>=0)
+{if(sqrt(3)*ua>=ub){sector = 1;	}else{sector = 2;}
+}else if(ua<=0&&ub>=0){if(-sqrt(3)*ua>ub){sector = 3;}else{sector = 2;}
+}else if(ua<=0&&ub<=0){if(-sqrt(3)*ua>=-ub){sector = 4;}else{sector = 5;}
+}else if(ua>=0&&ub<=0){if(sqrt(3)*ua<=-ub){sector = 5;}else{sector = 6;}
+}else{sector = 0;}
+
+}//cnt_if
+
+/***操作量から角度導出(MS)****/
+	theta = atan2(ub,ua);
+	if(theta >= 0){
+	theta_PI = theta;
+	theta_deg = (180.0 / M_PI) * theta_PI;
+}else{
+		theta_PI = 2*M_PI + theta;
+		theta_deg = (180.0 / M_PI) * theta_PI;
+	}
+
+
+/***ma導出(MS)****/
+ma_l =sqrt(ua*ua+ub*ub);
+ma_buf =ma_l/E;
+if(ma_buf >=1.0){ma = 1.0;}
+else{ma = ma_buf;}
+
+/***sector1に遷移****/
+if(sector == 1){
+	ua_1 = ua;
+	ub_1 = ub;
+}else if(sector == 2){
+	ua_1 = ma_l*cos(theta - M_PI/3);
+	ub_1 = ma_l*sin(theta - M_PI/3);
+}else if(sector == 3){
+	ua_1 = ma_l*cos(theta - 2*M_PI/3);
+	ub_1 = ma_l*sin(theta - 2*M_PI/3);
+}else if(sector == 4){
+	ua_1 = ma_l*cos(theta - M_PI);
+	ub_1 = ma_l*sin(theta - M_PI);
+}else if(sector == 5){
+	ua_1 = ma_l*cos(theta - 4*M_PI/3);
+	ub_1 = ma_l*sin(theta - 4*M_PI/3);
+}else if(sector == 6){
+	ua_1 = ma_l*cos(theta - 5*M_PI/3);
+	ub_1 = ma_l*sin(theta - 5*M_PI/3);
+}
+theta_1 = atan2(ub_1,ua_1);
+
+if(cnt == 0.0){//anti ms
+/***H,L,R導出****/
+H = abs((n-1)*ma*cos(M_PI/6 - theta_1))+1;
+L = abs((n-1)*ma*sin(theta_1))+1;
+R = abs((n-1)*ma*sin((M_PI/3)-theta_1))+1;
+
+/***secor type導出****/
+if(H == 1){
+	if(sector == 1|| sector == 3 || sector == 5){type = 1;
+	}else if (sector == 2|| sector == 4 || sector == 6){type = 2;
+	}else{type = 0;}
+}else if(H == 2){
+	if(L == 1){if(R == 2){type = 1;}else{type = 2;}
+	}else if(L == 2){type = 1;}
+}else if(H == 3){
+	if(L == 1){if(R == 3){type = 1;}else{type = 2;}
+	}else if(L == 2){if(R == 2){type = 1;}else{type = 2;}
+	}else if(L == 3){type = 1;}}
+else if(H == 4){
+	if(L == 1){if(R == 4){type = 1;}else{type = 2;}
+	}else if(L == 2){if(R == 3){type = 1;}else{type = 2;}
+	}else if(L == 3){if(R == 2){type = 1;}else{type = 2;}
+	}else if(L == 4){type = 1;}
+}
+
+}//cnt_if
+
+/***t1,t2導出****/
+if(type == 1){
+t1 = Tc*((n-1) * ma * sin((M_PI/3)-theta_1) - (H-L));
+t2 = Tc*((n-1)*ma*sin(theta_1)-(L-1));
+}else if(type == 2){
+t1 = Tc*((H-L)-(n-1)*ma*sin((M_PI/3)-theta_1));
+t2 = Tc*((n-1)*ma*sin((M_PI/3)+theta_1)-(H-1));
+}else{t1 = 0;t2 = 0;}
+t0 = Tc - t2 -t1;
+
+/***スイッチングパルス導出****/
+//if(cnt == 0.0){
+		T1 = t0/4;
+		T2 = t0/4 + t1/2;
+		T3 = t0/4 + t1/2 + t2/2;
+		T4 = t0/4 + t1/2 + t2/2 + t0/2;
+		T5 = t0/4 + t1/2 + t2 + t0/2;
+		T6 = t0/4 + t1 + t2 + t0/2;
+//	}//if(cnt == 0.0){はここで終了
+	if(svm_t < T1){UP = 0,VP = 0,WP = 0,UN = 1,VN = 1,WN = 1,Tlevel = 0;}
+	else if((T1 < svm_t) && (svm_t <= T2)){UP = 1,VP = 0,WP = 0,UN = 0,VN = 1,WN = 1,Tlevel = 1;}
+	else if((T2 < svm_t) && (svm_t <= T3)){UP = 1,VP = 1,WP = 0,UN = 0,VN = 0,WN = 1,Tlevel = 2;}
+	else if((T3 < svm_t) && (svm_t <= T4)){UP = 1,VP = 1,WP = 1,UN = 0,VN = 0,WN = 0,Tlevel = 3;}
+	else if((T4 < svm_t) && (svm_t <= T5)){UP = 1,VP = 1,WP = 0,UN = 0,VN = 0,WN = 1,Tlevel = 4;}
+	else if((T5 < svm_t) && (svm_t <= T6)){UP = 1,VP = 0,WP = 0,UN = 0,VN = 0,WN = 1,Tlevel = 5;}
+	else if((T6 < svm_t) && (svm_t <= Tc)){UP = 0,VP = 0,WP = 0,UN = 1,VN = 1,WN = 1,Tlevel = 6;}
+
+/***スイッチングパルス導出(W相ON時間0)****/
+/*if(cnt == 0.0){
+		T1 = t0/2;
+		T2 = t0/2 + t1/2;
+		T3 = t0/2 + t1/2 + t2/2;
+		T4 = t0/2 + t1/2 + t2;
+		T5 = t0/2 + t1 + t2;
+	}
+	if(svm_t < T1){UP = 0,VP = 0,WP = 0,UN = 1,VN = 1,WN = 1,Tlevel = 0;}
+	else if((T1 < svm_t) && (svm_t <= T2)){UP = 1,VP = 0,WP = 0,UN = 0,VN = 1,WN = 1,Tlevel = 1;}
+	else if((T2 < svm_t) && (svm_t <= T3)){UP = 1,VP = 1,WP = 0,UN = 0,VN = 0,WN = 1,Tlevel = 2;}
+	else if((T3 < svm_t) && (svm_t <= T4)){UP = 1,VP = 1,WP = 0,UN = 0,VN = 0,WN = 1,Tlevel = 4;}
+	else if((T4 < svm_t) && (svm_t <= T5)){UP = 1,VP = 0,WP = 0,UN = 0,VN = 0,WN = 1,Tlevel = 5;}
+	else if((T5 < svm_t) && (svm_t <= Tc)){UP = 0,VP = 0,WP = 0,UN = 1,VN = 1,WN = 1,Tlevel = 6;}*/
+else{UP = 0,VP = 0,WP = 0,UN = 0,VN = 0,WN = 0,Tlevel = -1;}
+
+/***SU,SV,SW導出（スイッチングレベル付与）****/
+if(sector == 1){
+	if(type == 1){
+		SU = UP + (H-1);
+		SV = VP + (L-1);
+		SW = WP;
+		}else if(type == 2){
+		SU = VP +(H-1);
+		SV = UP +(L-1);
+		SW = WP;
+		}
+}else if(sector == 2){
+	if(type == 1){
+		SV = UP + (H-1);
+		SU = VP + (R-1);
+		SW = WP;
+		}else if(type == 2){
+		SV = VP +(H-1);
+		SU = UP +(R-1);
+		SW = WP;
+		}
+}else if(sector == 3){
+	if(type == 1){
+		SV = UP + (H-1);
+		SW = VP + (L-1);
+		SU = WP;
+		}else if(type == 2){
+		SV = VP +(H-1);
+		SW = UP +(L-1);
+		SU = WP;
+		}
+}else if(sector == 4){
+	if(type == 1){
+		SW = UP + (H-1);
+		SV = VP + (R-1);
+		SU = WP;
+		}else if(type == 2){
+		SW = VP +(H-1);
+		SV = UP +(R-1);
+		SU = WP;
+		}
+}else if(sector == 5){
+	if(type == 1){
+		SW = UP + (H-1);
+		SU = VP + (L-1);
+		SV = WP;
+		}else if(type == 2){
+		SW = VP +(H-1);
+		SU = UP +(L-1);
+		SV = WP;
+		}
+}else if(sector == 6){
+	if(type ==1){
+		SU = UP + (H-1);
+		SW = VP + (R-1);
+		SV = WP;
+		}else if(type == 2){
+		SU = VP +(H-1);
+		SW = UP +(R-1);
+		SV = WP;
+		}
+}
+
+//out
+out[0] = sector;
+out[1] = theta_PI;
+out[2] = theta_deg;
+out[3] = ma_l;
+out[4] = ma;
+out[5] = ua_1;
+out[6] = ub_1;
+out[7] = theta_1;
+out[8] = H;
+out[9] = L;
+out[10] = R;
+out[11] = type;
+out[12] = t1;                  
+out[13] = t2;
+out[14] = t0;
+out[15] = UP;
+out[16] = UN;
+out[17] = VP;
+out[18] = VN;
+out[19] = WP;
+out[20] = WN;
+out[21] = Tlevel;
+out[22] = cnt;
+out[23] = svm_t;
+out[24] = SU;
+out[25] = SV;
+out[26] = SW;
+
+
+if(cnt == cnt_max){
+	cnt = 0;
+	svm_t = 0.0;
+}else{
+	cnt = cnt + 1;
+	svm_t += Tcnt; 
+}
+
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationBegin
+//   Initialization function. This function runs once at the beginning of simulation
+//   For parameter sweep or AC sweep simulation, this function runs at the beginning of each simulation cycle.
+//   Use this function to initialize static or global variables.
+//const char *szId: (read only) Name of the C-block 
+//int nInputCount: (read only) Number of input nodes
+//int nOutputCount: (read only) Number of output nodes
+//int nParameterCount: (read only) Number of parameters is always zero for C-Blocks.  Ignore nParameterCount and pszParameters
+//int *pnError: (write only)  assign  *pnError = 1;  if there is an error and set the error message in szErrorMsg
+//    strcpy(szErrorMsg, "Error message here..."); 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationBegin(
+		const char *szId, int nInputCount, int nOutputCount,
+		 int nParameterCount, const char ** pszParameters,
+		 int *pnError, char * szErrorMsg,
+		 void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+// ENTER INITIALIZATION CODE HERE...
+
+
+
+
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationEnd
+//   Termination function. This function runs once at the end of simulation
+//   For parameter sweep or AC sweep simulation, this function runs at the end of each simulation cycle.
+//   Use this function to de-allocate any allocated memory or to save the result of simulation in an alternate file.
+// Ignore all parameters for C-block 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationEnd(const char *szId, void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+
+
+
+
+}
+
+
+
+
+
+\end{mylisting}
+

@@ -1,0 +1,78 @@
+%Root main.tex
+%---------------------------------------------------------------------------
+%付録F　付録
+%---------------------------------------------------------------------------
+
+\chapter{VHDLプログラム}
+\thispagestyle{fancy}
+\label{chap:}
+\section{MMCプログラム構成}
+今回実装するMMCのベースとなるtopモジュールは，Headspring社から提供されている．そのため，三相MMCにて，新規で作成，変更したプログラムは主に，Control2.topモジュールとなる．また，FPGA内部モジュールの入出力に関して簡易図を示す．
+
+ \begin{figure}[htbp]
+  \begin{center}
+  \includegraphics[width=150mm]
+  {gaze/app_F/module.png}
+  \caption{FPGA内部モジュールのブロック図}
+  \label{vhdlmodule}
+  \end{center}
+ \end{figure}
+
+topモジュールの直下にはAD変換を行う「AD7357」モジュール，MSSRDCDB制御及びSVPWM制御を行う「Control\_top2」モジュールがある．Control\_top2モジュールをSimulnkの拡張機能HDL\_Coderによって自動生成している．Control\_top2モジュールの直下にはデッドビート制御を行う「SRDCDB2」モジュール,空間ベクトル変調を行う「SVPWM\_calcurate」モジュール,バランス制御を行う「Cell\_balance」モジュールがある．
+
+\begin{table}[H]
+\begin{center}
+ \caption{作成プログラムのバージョン履歴}
+ \label{table:ver_log}
+ \centering
+ \scalebox{0.8}[1.0]{
+  \begin{tabular}{c|c|c}
+   \hline
+   内容 & Simulinkファイル & ISEバージョン\\
+   \hline \hline
+   
+   OPEN制御プログラム & SVPWM\_open\_VHDL\_17\_delay15us & ver44\\
+   
+   \hline
+   
+   MSSRDCDB制御を追加 & MMC\_9level\_half\_cel\_ver7 & ver68\\
+   
+   \hline
+   
+   オーバーサンプリング係数を100に変更 & MMC\_9level\_half\_cel\_ver7 & ver69\\
+   
+   \hline
+   
+   デッドビート制御の状態量ADC結果を校正 & MMC\_9level\_half\_cel\_ver7 & ver70\\
+   
+   \hline
+   
+   バランス制御の状態量ADC結果を校正 & MMC\_9level\_half\_cel\_ver7 & ver71\\
+   
+  \end{tabular}
+  }
+ \end{center}
+\end{table}
+
+上記ファイルは横山研究室のサーバー"Canan"内のディレクトリ\\
+「¥¥192.168.253.51/Canaan/MMC」フォルダ内に保存されている．
+以下に本論文の結果取得に使用したVHDLファイル（HSP0056-DA0-0001C\_20240120\_ver71）のソースコードを示す．
+
+\input{appendix/program/appF_Top_module_VHDL.tex}
+%\input{appendix/program/appF_MMC_PWM_GEN_module_VHDL.tex}
+\newpage
+\input{appendix/program/appF_ADC_module_VHDL.tex}
+%\input{appendix/program/appF_WDT_module_VHDL.tex}
+\newpage
+\input{appendix/program/appF_Control_top2_module_VHDL.tex}
+%\input{appendix/program/appF_SRDCDB.tex}
+%\input{appendix/program/appF_SVPWM_VHDL.tex}
+%\input{appendix/program/appF_Cell_balance_module_VHDL.tex}
+
+
+
+\begin{comment}
+
+
+\end{comment}
+

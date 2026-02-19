@@ -1,0 +1,1667 @@
+%Root main.tex
+%---------------------------------------------------------------------------
+%付録A　付録
+%---------------------------------------------------------------------------
+%\lstnewenvironment{mylisting}[1][]
+%    {\lstset{
+%        frame=single,
+%        numbersep=10pt,
+%        tabsize=2,
+%        #1
+%    }
+%}{}
+\begin{mylisting}[language=VHDL,caption=ゲート信号出力モジュール,label=MMC_PWM_GEN_module_VHDL]
+
+
+----------------------------------------------------------------------------------
+-- Company: 
+-- Engineer: 
+-- 
+-- Create Date:    22:06:24 08/08/2019 
+-- Design Name: 
+-- Module Name:    MMC_PWM_FPGA - Behavioral 
+-- Project Name: 
+-- Target Devices: 
+-- Tool versions: 
+-- Description: 
+--
+-- Dependencies: 
+--
+-- Revision: 
+-- Revision 0.01 - File Created
+-- Additional Comments: 
+--
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_arith.all;
+use IEEE.STD_LOGIC_SIGNED.ALL;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity MMC_PWM_FPGA is
+
+	generic (
+
+--ver2.5.4--
+		--三角波刻み10kHz
+--		mrate_max				: integer := 40960000;	
+	--	tri_cnt_max				: integer := 2500;		
+	--	tri_cnt_max_half		: integer := 1250
+------------				--三角波刻み5kHz
+		mrate_max				: integer := 20480000;	
+		tri_cnt_max				: integer := 5000;		
+		tri_cnt_max_half		: integer := 2500
+------------		
+
+
+	);
+	
+	Port (
+		CLK100		: in	std_logic;
+		RESET		: in	std_logic;
+		A			: in	std_logic_vector(7 downto 0);
+		DW			: in	std_logic_vector(15 downto 0);
+--		DR			: out	std_logic_vector(15 downto 0)	:= "00000000" & "00000000";
+--		DR2		: out	std_logic_vector(15 downto 0)	:= "00000000" & "00000000";
+--		DR3		: out	std_logic_vector(15 downto 0)	:= "00000000" & "00000000";
+		RD			: in	std_logic;
+		WR			: in	std_logic;
+		
+		GB			: in  std_logic;
+		
+		MRate_UP1 : in std_logic_vector(15 downto 0);
+		MRate_UP2 : in std_logic_vector(15 downto 0);
+		MRate_UP3 : in std_logic_vector(15 downto 0);
+		MRate_UP4 : in std_logic_vector(15 downto 0);
+		MRate_UN1 : in std_logic_vector(15 downto 0);
+		MRate_UN2 : in std_logic_vector(15 downto 0);
+		MRate_UN3 : in std_logic_vector(15 downto 0);
+		MRate_UN4 : in std_logic_vector(15 downto 0);
+		MRate_VP1 : in std_logic_vector(15 downto 0);
+		MRate_VP2 : in std_logic_vector(15 downto 0);
+		MRate_VP3 : in std_logic_vector(15 downto 0);
+		MRate_VP4 : in std_logic_vector(15 downto 0);
+		MRate_VN1 : in std_logic_vector(15 downto 0);
+		MRate_VN2 : in std_logic_vector(15 downto 0);
+		MRate_VN3 : in std_logic_vector(15 downto 0);
+		MRate_VN4 : in std_logic_vector(15 downto 0);
+		
+		--ver2.6.4追加--
+		REF_UP1_vector	: in std_logic_vector(15 downto 0);
+		REF_UP2_vector	: in std_logic_vector(15 downto 0);
+		REF_UP3_vector	: in std_logic_vector(15 downto 0);
+		REF_UP4_vector	: in std_logic_vector(15 downto 0);
+		REF_UN1_vector	: in std_logic_vector(15 downto 0);
+		REF_UN2_vector	: in std_logic_vector(15 downto 0);
+		REF_UN3_vector	: in std_logic_vector(15 downto 0);
+		REF_UN4_vector	: in std_logic_vector(15 downto 0);
+		REF_VP1_vector	: in std_logic_vector(15 downto 0);
+		REF_VP2_vector	: in std_logic_vector(15 downto 0);
+		REF_VP3_vector	: in std_logic_vector(15 downto 0);
+		REF_VP4_vector	: in std_logic_vector(15 downto 0);
+		REF_VN1_vector	: in std_logic_vector(15 downto 0);
+		REF_VN2_vector	: in std_logic_vector(15 downto 0);
+		REF_VN3_vector	: in std_logic_vector(15 downto 0);
+		REF_VN4_vector	: in std_logic_vector(15 downto 0);
+		----------------
+		
+		--ver3.4.2--chipscopeデバッグ用---------------------
+		VAu 	  : in std_logic_vector(15 downto 0);
+		VAv 	  : in std_logic_vector(15 downto 0);
+		vb_up1  : in std_logic_vector(15 downto 0);
+		vb_up2  : in std_logic_vector(15 downto 0);
+		vb_up3  : in std_logic_vector(15 downto 0);
+		vb_up4  : in std_logic_vector(15 downto 0);
+		vb_un1  : in std_logic_vector(15 downto 0);
+		vb_un2  : in std_logic_vector(15 downto 0);
+		vb_un3  : in std_logic_vector(15 downto 0);
+		vb_un4  : in std_logic_vector(15 downto 0);
+		vb_vp1  : in std_logic_vector(15 downto 0);
+		vb_vp2  : in std_logic_vector(15 downto 0);
+		vb_vp3  : in std_logic_vector(15 downto 0);
+		vb_vp4  : in std_logic_vector(15 downto 0);
+		vb_vn1  : in std_logic_vector(15 downto 0);
+		vb_vn2  : in std_logic_vector(15 downto 0);
+		vb_vn3  : in std_logic_vector(15 downto 0);
+		vb_vn4  : in std_logic_vector(15 downto 0);
+		-------------------------------------------------
+		
+		nMMC_PWM1_FPGA	: out	std_logic_vector(47 downto 0);
+		nMMC_PWM2_FPGA	: out	std_logic_vector(47 downto 0);
+		nINT_SIG_FPGA	: out	std_logic := '1';
+		
+		PWM_ON_FPGA		: out	std_logic := '0';
+		GB_FPGA			: in	std_logic;
+		
+		--ver3.7--平均値制御の偏差積分初期化用
+		GATE_EN_out : out std_logic;
+		----------
+		--ver3.7.1--
+		VA_no_limit_U : in std_logic_vector(15 downto 0);
+		VA_no_limit_V : in std_logic_vector(15 downto 0);
+		----------
+		--ver3.7.5--
+		Voref_BB	: in std_logic_vector(15 downto 0);
+		------------
+		--ver3.8.5(debug)--
+		Iz_UP_N_debug_out_BB : in std_logic_vector(15 downto 0);
+		Iz_UP_N_out_BB 		: in std_logic_vector(15 downto 0);
+		-------------------
+--QMDB_ver1.1--------------------------------------------------------------------------------------
+		dVoref_out_BB        : IN     std_logic_vector(15 downto 0);
+		IC_N_out_BB	        : IN   	std_logic_vector(15 DOWNTO 0);
+		Vo_N_out_BB	        : IN 	   std_logic_vector(15 DOWNTO 0);
+		QMDB_OUTPUT_out_BB   : IN     std_logic_vector(15 DOWNTO 0);
+		Vdc_N_out_BB		    : IN     std_logic_vector(15 DOWNTO 0);
+		soft_cnt_out_BB	      : IN     std_logic_vector(15 DOWNTO 0);
+		clk10k_BBB           : IN     std_logic;
+		cnt80k_debug_BB		: IN 		std_logic_vector(15 DOWNTO 0)
+---------------------------------------------------------------------------------------------------
+		);
+end MMC_PWM_FPGA;
+
+architecture Behavioral of MMC_PWM_FPGA is
+
+--	constant Carrier_4k_count_max			: integer range 0 to 25000						:= 25000;--CLK100M
+	
+--	constant Carrier_10k_count_max		: integer range 0 to 10000						:= 10000;--CLK100M
+--	constant Carrier_10k_count_max		: integer range 0 to 200						:= 200;	--CLK2M
+--	constant Carrier_10k_count_max		: integer range 0 to 40							:= 40;	--CLK400k
+
+	signal 	MRate_UP1_C						: std_logic_vector(31 downto 0):=X"00000000";
+	signal 	MRate_UP2_C						: std_logic_vector(31 downto 0):=X"00000000";
+	signal 	MRate_UP3_C						: std_logic_vector(31 downto 0):=X"00000000";
+	signal 	MRate_UP4_C						: std_logic_vector(31 downto 0):=X"00000000";
+	signal 	MRate_UN1_C						: std_logic_vector(31 downto 0):=X"00000000";
+	signal 	MRate_UN2_C						: std_logic_vector(31 downto 0):=X"00000000";
+	signal 	MRate_UN3_C						: std_logic_vector(31 downto 0):=X"00000000";
+	signal 	MRate_UN4_C						: std_logic_vector(31 downto 0):=X"00000000";
+	signal 	MRate_VP1_C						: std_logic_vector(31 downto 0):=X"00000000";
+	signal 	MRate_VP2_C						: std_logic_vector(31 downto 0):=X"00000000";
+	signal 	MRate_VP3_C						: std_logic_vector(31 downto 0):=X"00000000";
+	signal 	MRate_VP4_C						: std_logic_vector(31 downto 0):=X"00000000";
+	signal 	MRate_VN1_C						: std_logic_vector(31 downto 0):=X"00000000";
+	signal 	MRate_VN2_C						: std_logic_vector(31 downto 0):=X"00000000";
+	signal 	MRate_VN3_C						: std_logic_vector(31 downto 0):=X"00000000";
+	signal 	MRate_VN4_C						: std_logic_vector(31 downto 0):=X"00000000";
+	
+	signal 	MRate_UP1_C_2					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UP2_C_2					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UP3_C_2					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UP4_C_2					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UN1_C_2					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UN2_C_2					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UN3_C_2					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UN4_C_2					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VP1_C_2					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VP2_C_2					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VP3_C_2					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VP4_C_2					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VN1_C_2					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VN2_C_2					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VN3_C_2					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VN4_C_2					: std_logic_vector(15 downto 0):=X"0000";
+
+	signal 	MRate_UP1_C_3					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UP2_C_3					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UP3_C_3					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UP4_C_3					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UN1_C_3					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UN2_C_3					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UN3_C_3					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UN4_C_3					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VP1_C_3					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VP2_C_3					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VP3_C_3					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VP4_C_3					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VN1_C_3					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VN2_C_3					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VN3_C_3					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VN4_C_3					: std_logic_vector(15 downto 0):=X"0000";
+
+	signal 	MRate_UP1_C_4					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UP2_C_4					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UP3_C_4					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UP4_C_4					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UN1_C_4					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UN2_C_4					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UN3_C_4					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UN4_C_4					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VP1_C_4					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VP2_C_4					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VP3_C_4					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VP4_C_4					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VN1_C_4					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VN2_C_4					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VN3_C_4					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VN4_C_4					: std_logic_vector(15 downto 0):=X"0000";
+
+	signal 	MRate_UP1_C_4_hold					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UP2_C_4_hold					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UP3_C_4_hold					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UP4_C_4_hold					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UN1_C_4_hold					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UN2_C_4_hold					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UN3_C_4_hold					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_UN4_C_4_hold					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VP1_C_4_hold					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VP2_C_4_hold					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VP3_C_4_hold					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VP4_C_4_hold					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VN1_C_4_hold					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VN2_C_4_hold					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VN3_C_4_hold					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	MRate_VN4_C_4_hold					: std_logic_vector(15 downto 0):=X"0000";
+
+	signal 	CNT_out_UP1						: integer range -32767 to 32767;
+	signal 	CNT_out_UP2						: integer range -32767 to 32767;
+	signal 	CNT_out_UP3						: integer range -32767 to 32767;
+	signal 	CNT_out_UP4						: integer range -32767 to 32767;
+	signal 	CNT_out_UN1						: integer range -32767 to 32767;
+	signal 	CNT_out_UN2						: integer range -32767 to 32767;
+	signal 	CNT_out_UN3						: integer range -32767 to 32767;
+	signal 	CNT_out_UN4						: integer range -32767 to 32767;
+	signal 	CNT_out_VP1						: integer range -32767 to 32767;
+	signal 	CNT_out_VP2						: integer range -32767 to 32767;
+	signal 	CNT_out_VP3						: integer range -32767 to 32767;
+	signal 	CNT_out_VP4						: integer range -32767 to 32767;
+	signal 	CNT_out_VN1						: integer range -32767 to 32767;
+	signal 	CNT_out_VN2						: integer range -32767 to 32767;
+	signal 	CNT_out_VN3						: integer range -32767 to 32767;
+	signal 	CNT_out_VN4						: integer range -32767 to 32767;
+
+ 	signal 	CNT_out_UP1_vector			: std_logic_vector(15 downto 0);
+ 	signal 	CNT_out_UP2_vector			: std_logic_vector(15 downto 0);
+ 	signal 	CNT_out_UP3_vector			: std_logic_vector(15 downto 0);
+ 	signal 	CNT_out_UP4_vector			: std_logic_vector(15 downto 0);
+ 	signal 	CNT_out_UN1_vector			: std_logic_vector(15 downto 0);
+ 	signal 	CNT_out_UN2_vector			: std_logic_vector(15 downto 0);
+ 	signal 	CNT_out_UN3_vector			: std_logic_vector(15 downto 0);
+ 	signal 	CNT_out_UN4_vector			: std_logic_vector(15 downto 0);
+ 	signal 	CNT_out_VP1_vector			: std_logic_vector(15 downto 0);
+ 	signal 	CNT_out_VP2_vector			: std_logic_vector(15 downto 0);
+ 	signal 	CNT_out_VP3_vector			: std_logic_vector(15 downto 0);
+ 	signal 	CNT_out_VP4_vector			: std_logic_vector(15 downto 0);
+ 	signal 	CNT_out_VN1_vector			: std_logic_vector(15 downto 0);
+ 	signal 	CNT_out_VN2_vector			: std_logic_vector(15 downto 0);
+ 	signal 	CNT_out_VN3_vector			: std_logic_vector(15 downto 0);
+ 	signal 	CNT_out_VN4_vector			: std_logic_vector(15 downto 0);
+	
+
+
+	--ver7.2(分解能向上)----------------------------------------------------------------------------------
+	constant pwm_assist						: std_logic_vector(15 downto 0) := X"1388"; --5000
+	constant pwm_assist_half				: std_logic_vector(15 downto 0) := X"09C4"; --2500	
+--	constant pwm_assist						: std_logic_vector(15 downto 0) := "0000100111000100"; --2500
+--	constant pwm_assist_half				: std_logic_vector(15 downto 0) := "0000010011100010"; --1250
+
+	--追加ver2.6--
+	--https://note.cman.jp/convert/bit/
+	--04E2 +1250 -- +100%
+	--04A4 +1188 -- +95%
+	--FB5C -1188 -- -95%
+	--FB1E -1250 -- -100%
+	
+	--09C4 +2500 -- +100%
+	--0947 +2375 -- +95%
+	--F6B9 -2375 -- -95%
+	--F63C -2500 -- -100%
+	
+	signal	upper_limit : std_logic_vector(15 downto 0):=X"0947";
+	signal	lower_limit : std_logic_vector(15 downto 0):=X"F6B9";
+
+   -----------------------------------------------------------------------------------------------------
+
+	constant count_max_default				: integer range 0 to 65535			:= 65535; 
+
+--　0~5000の場合
+--	signal 	cnt_phase_0						: integer range 0 to tri_cnt_max		:= tri_cnt_max_half;	--三角波初期カウント値
+--	signal 	cnt_phase_90					: integer range 0 to tri_cnt_max		:= 0;						--三角波初期カウント値		
+--	signal 	cnt_phase_180					: integer range 0 to tri_cnt_max		:= tri_cnt_max_half;	--三角波初期カウント値		
+--	signal 	cnt_phase_270					: integer range 0 to tri_cnt_max		:= tri_cnt_max;		--三角波初期カウント値	
+
+--ver7.3(位相ずれで9level実現)----------------------------------------------------------------------------------------------------------
+--45度位相ずれの場合------------------------
+	signal 	cnt_phase_0						: integer range -tri_cnt_max to tri_cnt_max		:= 0;					   --三角波初期カウント値
+	signal 	cnt_phase_45					: integer range -tri_cnt_max to tri_cnt_max		:= -tri_cnt_max_half;	--三角波初期カウント値
+	signal 	cnt_phase_90					: integer range -tri_cnt_max to tri_cnt_max		:= -tri_cnt_max;	   --三角波初期カウント値		
+	signal 	cnt_phase_135					: integer range -tri_cnt_max to tri_cnt_max		:= -tri_cnt_max_half;	--三角波初期カウント値		
+	signal 	cnt_phase_180					: integer range -tri_cnt_max to tri_cnt_max		:= 0;					   --三角波初期カウント値		
+	signal 	cnt_phase_225					: integer range -tri_cnt_max to tri_cnt_max		:= tri_cnt_max_half;	--三角波初期カウント値		
+	signal 	cnt_phase_270					: integer range -tri_cnt_max to tri_cnt_max		:= tri_cnt_max;	   --三角波初期カウント値	
+	signal 	cnt_phase_315					: integer range -tri_cnt_max to tri_cnt_max		:= tri_cnt_max_half;	--三角波初期カウント値
+	
+	signal 	cnt_phase_UD_0					: std_logic			:= '0';		--三角波UP/DOWNフラグ
+	signal 	cnt_phase_UD_45				: std_logic			:= '0';		--三角波UP/DOWNフラグ
+	signal 	cnt_phase_UD_90				: std_logic			:= '0';		--三角波UP/DOWNフラグ		
+	signal 	cnt_phase_UD_135				: std_logic			:= '1';		--三角波UP/DOWNフラグ		
+	signal 	cnt_phase_UD_180				: std_logic			:= '1';		--三角波UP/DOWNフラグ		
+	signal 	cnt_phase_UD_225				: std_logic			:= '1';		--三角波UP/DOWNフラグ		
+	signal 	cnt_phase_UD_270				: std_logic			:= '1';		--三角波UP/DOWNフラグ		
+	signal 	cnt_phase_UD_315				: std_logic			:= '0';		--三角波UP/DOWNフラグ		
+----------------------------------------
+--90度位相ずれの場合------------------------
+--	signal 	cnt_phase_0						: integer range -tri_cnt_max to tri_cnt_max		:= 0;					   --三角波初期カウント値
+--	signal 	cnt_phase_45					: integer range -tri_cnt_max to tri_cnt_max		:= 0;						--三角波初期カウント値
+--	signal 	cnt_phase_90					: integer range -tri_cnt_max to tri_cnt_max		:= -tri_cnt_max;	   --三角波初期カウント値		
+--	signal 	cnt_phase_135					: integer range -tri_cnt_max to tri_cnt_max		:= -tri_cnt_max;		--三角波初期カウント値		
+--	signal 	cnt_phase_180					: integer range -tri_cnt_max to tri_cnt_max		:= 0;					   --三角波初期カウント値		
+--	signal 	cnt_phase_225					: integer range -tri_cnt_max to tri_cnt_max		:= 0;						--三角波初期カウント値		
+--	signal 	cnt_phase_270					: integer range -tri_cnt_max to tri_cnt_max		:= tri_cnt_max;	   --三角波初期カウント値	
+--	signal 	cnt_phase_315					: integer range -tri_cnt_max to tri_cnt_max		:= tri_cnt_max;		--三角波初期カウント値
+--
+--	signal 	cnt_phase_UD_0					: std_logic			:= '0';		--三角波UP/DOWNフラグ
+--	signal 	cnt_phase_UD_45				: std_logic			:= '0';		--三角波UP/DOWNフラグ
+--	signal 	cnt_phase_UD_90				: std_logic			:= '0';		--三角波UP/DOWNフラグ		
+--	signal 	cnt_phase_UD_135				: std_logic			:= '0';		--三角波UP/DOWNフラグ		
+--	signal 	cnt_phase_UD_180				: std_logic			:= '1';		--三角波UP/DOWNフラグ		
+--	signal 	cnt_phase_UD_225				: std_logic			:= '1';		--三角波UP/DOWNフラグ		
+--	signal 	cnt_phase_UD_270				: std_logic			:= '1';		--三角波UP/DOWNフラグ		
+--	signal 	cnt_phase_UD_315				: std_logic			:= '1';		--三角波UP/DOWNフラグ		
+----------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------
+
+
+
+	signal nMMC_PWM1_FPGA_buf		: std_logic_vector(47 downto 0)	:= "11111111" & "11111111" & "11111111" & "11111111" & "11111111" & "11111111";
+	signal nMMC_PWM2_FPGA_buf		: std_logic_vector(47 downto 0)	:= "11111111" & "11111111" & "11111111" & "11111111" & "11111111" & "11111111";
+	signal nMMC_PWM1_FPGA_buf2		: std_logic_vector(47 downto 0)	:= "11111111" & "11111111" & "11111111" & "11111111" & "11111111" & "11111111";
+	signal nMMC_PWM2_FPGA_buf2		: std_logic_vector(47 downto 0)	:= "11111111" & "11111111" & "11111111" & "11111111" & "11111111" & "11111111";
+
+
+	--追加ver2.5--
+	signal cnt_400k_reg    : std_logic_vector(15 downto 0):=(others => '0');
+	signal cnt_2M_reg      : std_logic_vector(15 downto 0):=(others => '0');
+	constant cnt_400k_max  : std_logic_vector(15 downto 0):="0000000001111100";
+	constant cnt_2M_max    : std_logic_vector(15 downto 0):="0000000000011000";
+	signal clk2M           : std_logic			:= '0';	
+	signal clk400k         : std_logic			:= '0';	
+	signal tri_clk_B : std_logic			:= '0';	
+	-------------
+	
+	
+	signal	cnt_10k_B : std_logic_vector(15 downto 0);--出力：cnt10k
+	signal	cnt_20k_B : std_logic_vector(15 downto 0);--出力：cnt20k
+	signal	cnt_100k_B : std_logic_vector(15 downto 0);--出力：cnt100k
+	signal	cnt_1M_B : std_logic_vector(15 downto 0);--出力：cnt1M
+	signal	cnt_soft_B : std_logic_vector(3 downto 0); -- 10k or 20k or 100k --
+	signal	cnt_10k_ref_B : std_logic_vector(7 downto 0); --出力：10k_ref
+	signal	cnt_20k_ref_B : std_logic_vector(8 downto 0);--出力：20k_ref
+	signal	cnt_100k_ref_B : std_logic_vector(10 downto 0);--出力：100k_ref
+	signal	counter_1M_B : std_logic_vector(15 downto 0);
+	
+	signal	clk100k_B : std_logic := '0' ;
+	signal	clk500k_B : std_logic := '0' ;
+	--20220303追加
+	signal	clk1M_B : std_logic := '0' ;
+	
+	--追加ver2.5.6--	
+	signal	CONTROL0 : std_logic_vector(35 downto 0);
+	---------------
+	
+
+
+	----------------------
+	--デフォルトのMMC_PWM_GENにある変数
+	----------------------
+	signal SPR					: std_logic_vector(15 downto 0)		:= "00000000" & "00000000";
+
+	signal INT_EN				: std_logic_vector(3 downto 0)		:= "0000";
+
+	signal CNT_MAX_SET			: integer range 0 to 32767			:= 0;
+	signal DT_SET					: integer range 0 to 1023			:= 1023;
+	signal CNT_PHASE_SET_UP1	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_UP2	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_UP3	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_UP4	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_UN1	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_UN2	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_UN3	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_UN4	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_VP1	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_VP2	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_VP3	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_VP4	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_VN1	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_VN2	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_VN3	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_VN4	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_WP1	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_WP2	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_WP3	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_WP4	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_WN1	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_WN2	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_WN3	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_SET_WN4	: integer range -32767 to 32767		:= 0;
+	signal CNT_PHASE_UD_SET_UP1	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_UP2	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_UP3	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_UP4	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_UN1	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_UN2	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_UN3	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_UN4	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_VP1	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_VP2	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_VP3	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_VP4	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_VN1	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_VN2	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_VN3	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_VN4	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_WP1	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_WP2	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_WP3	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_WP4	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_WN1	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_WN2	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_WN3	: std_logic							:= '0';
+	signal CNT_PHASE_UD_SET_WN4	: std_logic							:= '0';
+	signal CNT_EN				: std_logic							:= '0';
+	signal GATE_EN				: std_logic							:= '0';
+	signal REF_UP1				: integer range -32767 to 32767		:= 0;
+	signal REF_UP2				: integer range -32767 to 32767		:= 0;
+	signal REF_UP3				: integer range -32767 to 32767		:= 0;
+	signal REF_UP4				: integer range -32767 to 32767		:= 0;
+	signal REF_UN1				: integer range -32767 to 32767		:= 0;
+	signal REF_UN2				: integer range -32767 to 32767		:= 0;
+	signal REF_UN3				: integer range -32767 to 32767		:= 0;
+	signal REF_UN4				: integer range -32767 to 32767		:= 0;
+	signal REF_VP1				: integer range -32767 to 32767		:= 0;
+	signal REF_VP2				: integer range -32767 to 32767		:= 0;
+	signal REF_VP3				: integer range -32767 to 32767		:= 0;
+	signal REF_VP4				: integer range -32767 to 32767		:= 0;
+	signal REF_VN1				: integer range -32767 to 32767		:= 0;
+	signal REF_VN2				: integer range -32767 to 32767		:= 0;
+	signal REF_VN3				: integer range -32767 to 32767		:= 0;
+	signal REF_VN4				: integer range -32767 to 32767		:= 0;
+	signal REF_WP1				: integer range -32767 to 32767		:= 0;
+	signal REF_WP2				: integer range -32767 to 32767		:= 0;
+	signal REF_WP3				: integer range -32767 to 32767		:= 0;
+	signal REF_WP4				: integer range -32767 to 32767		:= 0;
+	signal REF_WN1				: integer range -32767 to 32767		:= 0;
+	signal REF_WN2				: integer range -32767 to 32767		:= 0;
+	signal REF_WN3				: integer range -32767 to 32767		:= 0;
+	signal REF_WN4				: integer range -32767 to 32767		:= 0;
+	
+
+	-----------------------------
+	--ver3で追加
+	signal	cnt_10k_0_B : std_logic_vector(15 downto 0);
+	signal	cnt_10k_90_B : std_logic_vector(15 downto 0);
+	signal	cnt_10k_180_B : std_logic_vector(15 downto 0);
+	signal	cnt_10k_270_B : std_logic_vector(15 downto 0);
+	
+	signal 	MRate_UP1_C_4_int_hold			: integer range -32767 to 32767		:= 0;
+	signal 	MRate_UP2_C_4_int_hold			: integer range -32767 to 32767		:= 0;
+	signal 	MRate_UP3_C_4_int_hold			: integer range -32767 to 32767		:= 0;
+	signal 	MRate_UP4_C_4_int_hold			: integer range -32767 to 32767		:= 0;
+	signal 	MRate_UN1_C_4_int_hold			: integer range -32767 to 32767		:= 0;
+	signal 	MRate_UN2_C_4_int_hold			: integer range -32767 to 32767		:= 0;
+	signal 	MRate_UN3_C_4_int_hold			: integer range -32767 to 32767		:= 0;
+	signal 	MRate_UN4_C_4_int_hold			: integer range -32767 to 32767		:= 0;
+	signal 	MRate_VP1_C_4_int_hold			: integer range -32767 to 32767		:= 0;
+	signal 	MRate_VP2_C_4_int_hold			: integer range -32767 to 32767		:= 0;
+	signal 	MRate_VP3_C_4_int_hold			: integer range -32767 to 32767		:= 0;
+	signal 	MRate_VP4_C_4_int_hold			: integer range -32767 to 32767		:= 0;
+	signal 	MRate_VN1_C_4_int_hold			: integer range -32767 to 32767		:= 0;
+	signal 	MRate_VN2_C_4_int_hold			: integer range -32767 to 32767		:= 0;
+	signal 	MRate_VN3_C_4_int_hold			: integer range -32767 to 32767		:= 0;
+	signal 	MRate_VN4_C_4_int_hold			: integer range -32767 to 32767		:= 0;
+	
+	--ver3.3で追加
+	signal 	REF_hold_out_UP1			: integer range -32767 to 32767		:= 0;
+	signal 	REF_hold_out_UP2			: integer range -32767 to 32767		:= 0;
+	signal 	REF_hold_out_UP3			: integer range -32767 to 32767		:= 0;
+	signal 	REF_hold_out_UP4			: integer range -32767 to 32767		:= 0;
+	signal 	REF_hold_out_UN1			: integer range -32767 to 32767		:= 0;
+	signal 	REF_hold_out_UN2			: integer range -32767 to 32767		:= 0;
+	signal 	REF_hold_out_UN3			: integer range -32767 to 32767		:= 0;
+	signal 	REF_hold_out_UN4			: integer range -32767 to 32767		:= 0;
+	signal 	REF_hold_out_VP1			: integer range -32767 to 32767		:= 0;
+	signal 	REF_hold_out_VP2			: integer range -32767 to 32767		:= 0;
+	signal 	REF_hold_out_VP3			: integer range -32767 to 32767		:= 0;
+	signal 	REF_hold_out_VP4			: integer range -32767 to 32767		:= 0;
+	signal 	REF_hold_out_VN1			: integer range -32767 to 32767		:= 0;
+	signal 	REF_hold_out_VN2			: integer range -32767 to 32767		:= 0;
+	signal 	REF_hold_out_VN3			: integer range -32767 to 32767		:= 0;
+	signal 	REF_hold_out_VN4			: integer range -32767 to 32767		:= 0;
+	
+	signal 	REF_hold_out_UP1_vector					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	REF_hold_out_UP2_vector					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	REF_hold_out_UP3_vector					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	REF_hold_out_UP4_vector					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	REF_hold_out_UN1_vector					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	REF_hold_out_UN2_vector					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	REF_hold_out_UN3_vector					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	REF_hold_out_UN4_vector					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	REF_hold_out_VP1_vector					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	REF_hold_out_VP2_vector					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	REF_hold_out_VP3_vector					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	REF_hold_out_VP4_vector					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	REF_hold_out_VN1_vector					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	REF_hold_out_VN2_vector					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	REF_hold_out_VN3_vector					: std_logic_vector(15 downto 0):=X"0000";
+	signal 	REF_hold_out_VN4_vector					: std_logic_vector(15 downto 0):=X"0000";
+	
+	signal   nMMC_PWM1_FPGA_buf2_UP1 : std_logic_vector(0 downto 0);
+	
+	--追加ver2.3--
+		component MMC_PWM_FPGA_SUB is
+		Port (
+		CLK100				: in  std_logic;
+		RESET					: in	std_logic;
+		
+		CNT_MAX_SET			: in	integer range 0 to 32767;
+		CNT_PHASE_SET		: in	integer range -32767 to 32767;
+		CNT_PHASE_UD_SET	: in	std_logic;
+		DT_SET				: in	integer range 0 to 1023;
+		CNT_EN				: in	std_logic;
+		GATE_EN				: in	std_logic;
+		REF					: in	integer range -32767 to 32767;
+		nGATE					: out	std_logic_vector(3 downto 0)	:= "1111";
+		
+		--追加--
+		REF_hold_out			: out integer range -32767 to 32767;
+		CNT_out					: out integer range -32767 to 32767
+--		CNT_hold1				: out integer range -32767 to 32767;
+--		CNT_hold2				: out integer range -32767 to 32767;
+--		CNT_hold3				: out integer range -32767 to 32767;
+--		CNT_hold4				: out integer range -32767 to 32767
+		-------
+
+			);
+		end component;
+		-----------
+
+	component cnt_clk_3 is
+		Port (
+			CLK100 : in std_logic;--入力：クロック
+			cnt_10k : out std_logic_vector(15 downto 0);--出力：cnt10k
+			cnt_20k : out std_logic_vector(15 downto 0);--出力：cnt20k
+			cnt_100k : out std_logic_vector(15 downto 0);--出力：cnt100k
+			cnt_1M : out std_logic_vector(15 downto 0);--出力：cnt1M
+			cnt_soft : out std_logic_vector(3 downto 0); -- 10k or 20k or 100k --
+			cnt_10k_ref : out std_logic_vector(7 downto 0); --出力：10k_ref
+			cnt_20k_ref : out std_logic_vector(8 downto 0);--出力：20k_ref
+			cnt_100k_ref : out std_logic_vector(10 downto 0);--出力：100k_ref
+			counter_1M : out std_logic_vector(15 downto 0);
+			clk100k : out std_logic;
+			clk500k : out std_logic;
+			clk1M : out std_logic;
+			CNT_EN : in std_logic;
+			cnt_10k_0 : out std_logic_vector(15 downto 0);
+			cnt_10k_90 : out std_logic_vector(15 downto 0);
+			cnt_10k_180 : out std_logic_vector(15 downto 0);
+			cnt_10k_270 : out std_logic_vector(15 downto 0)
+			);
+	end component;
+
+
+
+	--追加ver2.5.6--
+--		component icon1 is
+--			Port (
+--			  CONTROL0                          :   INOUT   std_logic_vector(35 DOWNTO 0)
+--			);
+--		end component;
+--
+--
+--	--見る信号の変数のみコメントアウトを外す
+--	--このとき、最後となる変数のセミコロンを外すのを忘れないこと
+--		component ila1 is
+--			Port (
+--			  CONTROL                           :   IN   std_logic_vector(35 DOWNTO 0);
+--			  CLK		                           :   IN   std_logic;
+--			  
+--			  TRIG0	                           :   IN   std_logic_vector(15 DOWNTO 0); --制御量u(正規化あと:UP1)
+----			  TRIG1	                           : 	 IN   std_logic_vector(15 DOWNTO 0); --制御量u(headspring:UP1)
+----			  TRIG2	                           : 	 IN   std_logic_vector(15 DOWNTO 0); --三角波:UP1			  
+--			  TRIG1	                           : 	 IN   std_logic_vector(15 DOWNTO 0); --平均値制御出力(u相)
+--			  TRIG2	                           : 	 IN   std_logic_vector(15 DOWNTO 0); --バランス制御出力(up1)
+--			  TRIG3	                           : 	 IN   std_logic_vector(15 DOWNTO 0); --Iup_10kHz			  
+--			  TRIG4	                           : 	 IN   std_logic_vector(15 DOWNTO 0); --Voref
+--			  TRIG5	                           : 	 IN   std_logic_vector(15 DOWNTO 0); --dVoref
+--			  TRIG6	                           : 	 IN   std_logic_vector(15 DOWNTO 0); --Vo              
+--			  TRIG7	                           : 	 IN   std_logic_vector(15 DOWNTO 0); --IC
+--			  TRIG8	                   		   : 	 IN   std_logic_vector(15 DOWNTO 0); --QMDBout
+----			  TRIG9	                   		   : 	 IN   std_logic_vector(15 DOWNTO 0); --Vdc_N
+--			  TRIG9	                   		   : 	 IN   std_logic_vector(15 DOWNTO 0); --soft_cnt_out_BB,cnt80k_debug_BB
+--			  TRIG10	                   		   : 	 IN   std_logic_vector(0 downto 0) --clk10k_BBB
+--			  
+----			  TRIG0	                           :   IN   std_logic_vector(15 DOWNTO 0); --制御量u(正規化前:UP1)
+----			  TRIG1	                           :   IN   std_logic_vector(15 DOWNTO 0); --制御量u(正規化あと_hold後:UP1)
+----			  TRIG4	                           : 	 IN   std_logic_vector(0 DOWNTO 0);--ゲート信号:UP1
+----			  TRIG7	                           : 	 IN   std_logic_vector(15 DOWNTO 0)--平均値制御出力リミッタなし(u相)
+----			  TRIG8	                           : 	 IN   std_logic_vector(15 DOWNTO 0);--Iup_100MHz
+--
+--
+----			  TRIG1									   :   IN   std_logic_vector(15 DOWNTO 0); --制御量u(正規化前:VP1)
+----			  TRIG3	                           :   IN   std_logic_vector(13 DOWNTO 0); --制御量u(正規化あと:VP1)			  
+----			  TRIG5	                           : 	 IN   std_logic_vector(13 DOWNTO 0)  --制御量u(三角波:VP1)
+--
+----			  TRIG6	                           : 	 IN   integer range 0 to 16384; 
+----			  TRIG7	                           : 	 IN   integer range 0 to 16384; 
+----			  TRIG8	                           : 	 IN   integer range -mrate_max to mrate_max;  
+----			  TRIG9	                           : 	 IN   integer range -mrate_max to mrate_max;  
+----			  TRIG10	                           : 	 IN   integer range -mrate_max to mrate_max;  
+----			  TRIG11	                           : 	 IN   integer range -mrate_max to mrate_max;  
+----			  TRIG12	                           :   IN   integer range 0 to 2500;  
+----			  TRIG13	                           :   IN   integer range 0 to 2500;  
+----			  TRIG14	                           :   IN   integer range 0 to 2500;  
+----			  TRIG15	                           :   IN   integer range 0 to 2500
+--
+--			);
+--		end component;
+	---------------
+	
+begin
+
+----ver2.6.1
+
+	process(CLK100)
+	begin
+		if CLK100'event and CLK100 = '1' then
+		
+----------------
+		--cnt80k=X"003D"
+		--制御量ΔTを三角波に合わせて5000倍
+		--5000倍した制御量ΔTのmaxは----となる
+			MRate_UP1_C <= MRate_UP1 * pwm_assist;
+			MRate_UP2_C <= MRate_UP2 * pwm_assist;
+			MRate_UP3_C <= MRate_UP3 * pwm_assist;
+			MRate_UP4_C <= MRate_UP4 * pwm_assist;
+			
+			MRate_UN1_C <= MRate_UN1 * pwm_assist;
+			MRate_UN2_C <= MRate_UN2 * pwm_assist;
+			MRate_UN3_C <= MRate_UN3 * pwm_assist;
+			MRate_UN4_C <= MRate_UN4 * pwm_assist;
+
+			MRate_VP1_C <= MRate_VP1 * pwm_assist;
+			MRate_VP2_C <= MRate_VP2 * pwm_assist;
+			MRate_VP3_C <= MRate_VP3 * pwm_assist;
+			MRate_VP4_C <= MRate_VP4 * pwm_assist;
+			
+			MRate_VN1_C <= MRate_VN1 * pwm_assist;
+			MRate_VN2_C <= MRate_VN2 * pwm_assist;
+			MRate_VN3_C <= MRate_VN3 * pwm_assist;
+			MRate_VN4_C <= MRate_VN4 * pwm_assist;
+			
+		--cnt80k=X"003E"
+		--これを14bit(16384)シフトする(整数部の取得)で0~5000にする。
+			MRate_UP1_C_2 <= MRate_UP1_C(29 downto 14);
+			MRate_UP2_C_2 <= MRate_UP2_C(29 downto 14);
+			MRate_UP3_C_2 <= MRate_UP3_C(29 downto 14);
+			MRate_UP4_C_2 <= MRate_UP4_C(29 downto 14);
+			
+			MRate_UN1_C_2 <= MRate_UN1_C(29 downto 14);
+			MRate_UN2_C_2 <= MRate_UN2_C(29 downto 14);
+			MRate_UN3_C_2 <= MRate_UN3_C(29 downto 14);
+			MRate_UN4_C_2 <= MRate_UN4_C(29 downto 14);
+
+			MRate_VP1_C_2 <= MRate_VP1_C(29 downto 14);
+			MRate_VP2_C_2 <= MRate_VP2_C(29 downto 14);
+			MRate_VP3_C_2 <= MRate_VP3_C(29 downto 14);
+			MRate_VP4_C_2 <= MRate_VP4_C(29 downto 14);
+			
+			MRate_VN1_C_2 <= MRate_VN1_C(29 downto 14);
+			MRate_VN2_C_2 <= MRate_VN2_C(29 downto 14);
+			MRate_VN3_C_2 <= MRate_VN3_C(29 downto 14);
+			MRate_VN4_C_2 <= MRate_VN4_C(29 downto 14);
+
+		--cnt80k=X"003F"
+		--オフセット-2500してheadspringの三角波比較(10kHz)に合わせる
+			MRate_UP1_C_3 <= MRate_UP1_C_2 - pwm_assist_half;
+			MRate_UP2_C_3 <= MRate_UP2_C_2 - pwm_assist_half;
+			MRate_UP3_C_3 <= MRate_UP3_C_2 - pwm_assist_half;
+			MRate_UP4_C_3 <= MRate_UP4_C_2 - pwm_assist_half;
+
+			MRate_UN1_C_3 <= MRate_UN1_C_2 - pwm_assist_half;
+			MRate_UN2_C_3 <= MRate_UN2_C_2 - pwm_assist_half;
+			MRate_UN3_C_3 <= MRate_UN3_C_2 - pwm_assist_half;
+			MRate_UN4_C_3 <= MRate_UN4_C_2 - pwm_assist_half;
+			
+			MRate_VP1_C_3 <= MRate_VP1_C_2 - pwm_assist_half;
+			MRate_VP2_C_3 <= MRate_VP2_C_2 - pwm_assist_half;
+			MRate_VP3_C_3 <= MRate_VP3_C_2 - pwm_assist_half;
+			MRate_VP4_C_3 <= MRate_VP4_C_2 - pwm_assist_half;
+
+			MRate_VN1_C_3 <= MRate_VN1_C_2 - pwm_assist_half;
+			MRate_VN2_C_3 <= MRate_VN2_C_2 - pwm_assist_half;
+			MRate_VN3_C_3 <= MRate_VN3_C_2 - pwm_assist_half;
+			MRate_VN4_C_3 <= MRate_VN4_C_2 - pwm_assist_half;
+
+		--ver2.6
+
+		-------------------------------
+		--リミッタ処理なし
+		-------------------------------
+		--	MRate_UP1_C_4 <= MRate_UP1_C_3;
+		--	MRate_UP2_C_4 <= MRate_UP2_C_3;
+		--	MRate_UP3_C_4 <= MRate_UP3_C_3;
+		--	MRate_UP4_C_4 <= MRate_UP4_C_3;
+		--	
+		--	MRate_UN1_C_4 <= MRate_UN1_C_3;
+		--	MRate_UN2_C_4 <= MRate_UN2_C_3;
+		--	MRate_UN3_C_4 <= MRate_UN3_C_3;
+		--	MRate_UN4_C_4 <= MRate_UN4_C_3;
+		--
+		--	MRate_VP1_C_4 <= MRate_VP1_C_3;
+		--	MRate_VP2_C_4 <= MRate_VP2_C_3;
+		--	MRate_VP3_C_4 <= MRate_VP3_C_3;
+		--	MRate_VP4_C_4 <= MRate_VP4_C_3;
+		--	
+		--	MRate_VN1_C_4 <= MRate_VN1_C_3;
+		--	MRate_VN2_C_4 <= MRate_VN2_C_3;
+		--	MRate_VN3_C_4 <= MRate_VN3_C_3;
+		--	MRate_VN4_C_4 <= MRate_VN4_C_3;
+
+		-------------------------------
+		--リミッタ処理あり
+		-------------------------------
+
+		--cnt80k=X"0040"
+		--UP1
+			if( MRate_UP1_C_3 > upper_limit ) then
+				MRate_UP1_C_4 <= upper_limit;
+			elsif( MRate_UP1_C_3	< lower_limit ) then
+				MRate_UP1_C_4 <= lower_limit;
+			else
+				MRate_UP1_C_4 <= MRate_UP1_C_3;
+			end if;
+		--UP2
+			if( MRate_UP2_C_3 > upper_limit ) then
+				MRate_UP2_C_4 <= upper_limit;
+			elsif( MRate_UP2_C_3	< lower_limit ) then
+				MRate_UP2_C_4 <= lower_limit;
+			else
+				MRate_UP2_C_4 <= MRate_UP2_C_3;
+			end if;
+		--UP3
+			if( MRate_UP3_C_3 > upper_limit ) then
+				MRate_UP3_C_4 <= upper_limit;
+			elsif( MRate_UP3_C_3	< lower_limit ) then
+				MRate_UP3_C_4 <= lower_limit;
+			else
+				MRate_UP3_C_4 <= MRate_UP3_C_3;
+			end if;
+		--UP4
+			if( MRate_UP4_C_3 > upper_limit ) then
+				MRate_UP4_C_4 <= upper_limit;
+			elsif( MRate_UP4_C_3	< lower_limit ) then
+				MRate_UP4_C_4 <= lower_limit;
+			else
+				MRate_UP4_C_4 <= MRate_UP4_C_3;
+			end if;
+		--UN1
+			if( MRate_UN1_C_3 > upper_limit ) then
+				MRate_UN1_C_4 <= upper_limit;
+			elsif( MRate_UN1_C_3	< lower_limit ) then
+				MRate_UN1_C_4 <= lower_limit;
+			else
+				MRate_UN1_C_4 <= MRate_UN1_C_3;
+			end if;
+		--UN2
+			if( MRate_UN2_C_3 > upper_limit ) then
+				MRate_UN2_C_4 <= upper_limit;
+			elsif( MRate_UN2_C_3	< lower_limit ) then
+				MRate_UN2_C_4 <= lower_limit;
+			else
+				MRate_UN2_C_4 <= MRate_UN2_C_3;
+			end if;
+		--UN3
+			if( MRate_UN3_C_3 > upper_limit ) then
+				MRate_UN3_C_4 <= upper_limit;
+			elsif( MRate_UN3_C_3	< lower_limit ) then
+				MRate_UN3_C_4 <= lower_limit;
+			else
+				MRate_UN3_C_4 <= MRate_UN3_C_3;
+			end if;
+		--UN4
+			if( MRate_UN4_C_3 > upper_limit ) then
+				MRate_UN4_C_4 <= upper_limit;
+			elsif( MRate_UN4_C_3	< lower_limit ) then
+				MRate_UN4_C_4 <= lower_limit;
+			else
+				MRate_UN4_C_4 <= MRate_UN4_C_3;
+			end if;
+
+		--VP1
+			if( MRate_VP1_C_3 > upper_limit ) then
+				MRate_VP1_C_4 <= upper_limit;
+			elsif( MRate_VP1_C_3	< lower_limit ) then
+				MRate_VP1_C_4 <= lower_limit;
+			else
+				MRate_VP1_C_4 <= MRate_VP1_C_3;
+			end if;
+		--VP2
+			if( MRate_VP2_C_3 > upper_limit ) then
+				MRate_VP2_C_4 <= upper_limit;
+			elsif( MRate_VP2_C_3	< lower_limit ) then
+				MRate_VP2_C_4 <= lower_limit;
+			else
+				MRate_VP2_C_4 <= MRate_VP2_C_3;
+			end if;
+		--VP3
+			if( MRate_VP3_C_3 > upper_limit ) then
+				MRate_VP3_C_4 <= upper_limit;
+			elsif( MRate_VP3_C_3	< lower_limit ) then
+				MRate_VP3_C_4 <= lower_limit;
+			else
+				MRate_VP3_C_4 <= MRate_VP3_C_3;
+			end if;
+		--VP4
+			if( MRate_VP4_C_3 > upper_limit ) then
+				MRate_VP4_C_4 <= upper_limit;
+			elsif( MRate_VP4_C_3	< lower_limit ) then
+				MRate_VP4_C_4 <= lower_limit;
+			else
+				MRate_VP4_C_4 <= MRate_VP4_C_3;
+			end if;
+		--VN1
+			if( MRate_VN1_C_3 > upper_limit ) then
+				MRate_VN1_C_4 <= upper_limit;
+			elsif( MRate_VN1_C_3	< lower_limit ) then
+				MRate_VN1_C_4 <= lower_limit;
+			else
+				MRate_VN1_C_4 <= MRate_VN1_C_3;
+			end if;
+		--VN2
+			if( MRate_VN2_C_3 > upper_limit ) then
+				MRate_VN2_C_4 <= upper_limit;
+			elsif( MRate_VN2_C_3	< lower_limit ) then
+				MRate_VN2_C_4 <= lower_limit;
+			else
+				MRate_VN2_C_4 <= MRate_VN2_C_3;
+			end if;
+		--VN3
+			if( MRate_VN3_C_3 > upper_limit ) then
+				MRate_VN3_C_4 <= upper_limit;
+			elsif( MRate_VN3_C_3	< lower_limit ) then
+				MRate_VN3_C_4 <= lower_limit;
+			else
+				MRate_VN3_C_4 <= MRate_VN3_C_3;
+			end if;
+		--VN4
+			if( MRate_VN4_C_3 > upper_limit ) then
+				MRate_VN4_C_4 <= upper_limit;
+			elsif( MRate_VN4_C_3	< lower_limit ) then
+				MRate_VN4_C_4 <= lower_limit;
+			else
+				MRate_VN4_C_4 <= MRate_VN4_C_3;
+			end if;
+
+------------
+
+		--	--hold処理 -> 下の三角波モジュールで行う--
+		----	if(cnt_10k_0_B = X"0000")then
+		--		MRate_UP1_C_4_hold <= MRate_UP1_C_4;
+		--		MRate_UN1_C_4_hold <= MRate_UN1_C_4;
+		--		MRate_VP1_C_4_hold <= MRate_VP1_C_4;
+		--		MRate_VN1_C_4_hold <= MRate_VN1_C_4;
+		----	elsif(cnt_10k_90_B = X"0000")then
+		--		MRate_UP2_C_4_hold <= MRate_UP2_C_4;
+		--		MRate_UN2_C_4_hold <= MRate_UN2_C_4;
+		--		MRate_VP2_C_4_hold <= MRate_VP2_C_4;
+		--		MRate_VN2_C_4_hold <= MRate_VN2_C_4;
+		----	elsif(cnt_10k_180_B = X"0000")then		
+		--		MRate_UP3_C_4_hold <= MRate_UP3_C_4;
+		--		MRate_UN3_C_4_hold <= MRate_UN3_C_4;
+		--		MRate_VP3_C_4_hold <= MRate_VP3_C_4;
+		--		MRate_VN3_C_4_hold <= MRate_VN3_C_4;
+		----	elsif(cnt_10k_270_B = X"0000")then		
+		--		MRate_UP4_C_4_hold <= MRate_UP4_C_4;
+		--		MRate_UN4_C_4_hold <= MRate_UN4_C_4;
+		--		MRate_VP4_C_4_hold <= MRate_VP4_C_4;
+		--		MRate_VN4_C_4_hold <= MRate_VN4_C_4;
+		----	end if;
+		--	
+		--	--制御入力をvector型に変更して下のモジュールへ
+		--	MRate_UP1_C_4_int_hold <= CONV_INTEGER(MRate_UP1_C_4_hold);
+		--	MRate_UP2_C_4_int_hold <= CONV_INTEGER(MRate_UP2_C_4_hold);
+		--	MRate_UP3_C_4_int_hold <= CONV_INTEGER(MRate_UP3_C_4_hold);
+		--	MRate_UP4_C_4_int_hold <= CONV_INTEGER(MRate_UP4_C_4_hold);
+		--
+		--	MRate_UN1_C_4_int_hold <= CONV_INTEGER(MRate_UN1_C_4_hold);
+		--	MRate_UN2_C_4_int_hold <= CONV_INTEGER(MRate_UN2_C_4_hold);
+		--	MRate_UN3_C_4_int_hold <= CONV_INTEGER(MRate_UN3_C_4_hold);
+		--	MRate_UN4_C_4_int_hold <= CONV_INTEGER(MRate_UN4_C_4_hold);
+		--
+		--	MRate_VP1_C_4_int_hold <= CONV_INTEGER(MRate_VP1_C_4_hold);
+		--	MRate_VP2_C_4_int_hold <= CONV_INTEGER(MRate_VP2_C_4_hold);
+		--	MRate_VP3_C_4_int_hold <= CONV_INTEGER(MRate_VP3_C_4_hold);
+		--	MRate_VP4_C_4_int_hold <= CONV_INTEGER(MRate_VP4_C_4_hold);
+		--
+		--	MRate_VN1_C_4_int_hold <= CONV_INTEGER(MRate_VN1_C_4_hold);
+		--	MRate_VN2_C_4_int_hold <= CONV_INTEGER(MRate_VN2_C_4_hold);
+		--	MRate_VN3_C_4_int_hold <= CONV_INTEGER(MRate_VN3_C_4_hold);
+		--	MRate_VN4_C_4_int_hold <= CONV_INTEGER(MRate_VN4_C_4_hold);
+			
+		--cnt80k=X"0041"
+		--制御入力をvector型に変更して下のモジュールへ
+			MRate_UP1_C_4_int_hold <= CONV_INTEGER(MRate_UP1_C_4);
+			MRate_UP2_C_4_int_hold <= CONV_INTEGER(MRate_UP2_C_4);
+			MRate_UP3_C_4_int_hold <= CONV_INTEGER(MRate_UP3_C_4);
+			MRate_UP4_C_4_int_hold <= CONV_INTEGER(MRate_UP4_C_4);
+
+			MRate_UN1_C_4_int_hold <= CONV_INTEGER(MRate_UN1_C_4);
+			MRate_UN2_C_4_int_hold <= CONV_INTEGER(MRate_UN2_C_4);
+			MRate_UN3_C_4_int_hold <= CONV_INTEGER(MRate_UN3_C_4);
+			MRate_UN4_C_4_int_hold <= CONV_INTEGER(MRate_UN4_C_4);
+
+			MRate_VP1_C_4_int_hold <= CONV_INTEGER(MRate_VP1_C_4);
+			MRate_VP2_C_4_int_hold <= CONV_INTEGER(MRate_VP2_C_4);
+			MRate_VP3_C_4_int_hold <= CONV_INTEGER(MRate_VP3_C_4);
+			MRate_VP4_C_4_int_hold <= CONV_INTEGER(MRate_VP4_C_4);
+
+			MRate_VN1_C_4_int_hold <= CONV_INTEGER(MRate_VN1_C_4);
+			MRate_VN2_C_4_int_hold <= CONV_INTEGER(MRate_VN2_C_4);
+			MRate_VN3_C_4_int_hold <= CONV_INTEGER(MRate_VN3_C_4);
+			MRate_VN4_C_4_int_hold <= CONV_INTEGER(MRate_VN4_C_4);
+			
+		--三角波をint型に変更してchipscopeでデバッグ------------------------------------------
+			CNT_out_UP1_vector	 <= CONV_STD_LOGIC_VECTOR(CNT_out_UP1,16);
+			CNT_out_UP2_vector	 <= CONV_STD_LOGIC_VECTOR(CNT_out_UP2,16);
+			CNT_out_UP3_vector	 <= CONV_STD_LOGIC_VECTOR(CNT_out_UP3,16);
+			CNT_out_UP4_vector	 <= CONV_STD_LOGIC_VECTOR(CNT_out_UP4,16);
+			CNT_out_UN1_vector	 <= CONV_STD_LOGIC_VECTOR(CNT_out_UN1,16);
+			CNT_out_UN2_vector	 <= CONV_STD_LOGIC_VECTOR(CNT_out_UN2,16);
+			CNT_out_UN3_vector	 <= CONV_STD_LOGIC_VECTOR(CNT_out_UN3,16);
+			CNT_out_UN4_vector	 <= CONV_STD_LOGIC_VECTOR(CNT_out_UN4,16);
+			CNT_out_VP1_vector	 <= CONV_STD_LOGIC_VECTOR(CNT_out_VP1,16);
+			CNT_out_VP2_vector	 <= CONV_STD_LOGIC_VECTOR(CNT_out_VP2,16);
+			CNT_out_VP3_vector	 <= CONV_STD_LOGIC_VECTOR(CNT_out_VP3,16);
+			CNT_out_VP4_vector	 <= CONV_STD_LOGIC_VECTOR(CNT_out_VP4,16);
+			CNT_out_VN1_vector	 <= CONV_STD_LOGIC_VECTOR(CNT_out_VN1,16);
+			CNT_out_VN2_vector	 <= CONV_STD_LOGIC_VECTOR(CNT_out_VN2,16);
+			CNT_out_VN3_vector	 <= CONV_STD_LOGIC_VECTOR(CNT_out_VN3,16);
+			CNT_out_VN4_vector	 <= CONV_STD_LOGIC_VECTOR(CNT_out_VN4,16);
+			
+			REF_hold_out_UP1_vector	 <= CONV_STD_LOGIC_VECTOR(REF_hold_out_UP1,16);
+			REF_hold_out_UP2_vector	 <= CONV_STD_LOGIC_VECTOR(REF_hold_out_UP2,16);
+			REF_hold_out_UP3_vector	 <= CONV_STD_LOGIC_VECTOR(REF_hold_out_UP3,16);
+			REF_hold_out_UP4_vector	 <= CONV_STD_LOGIC_VECTOR(REF_hold_out_UP4,16);
+			REF_hold_out_UN1_vector	 <= CONV_STD_LOGIC_VECTOR(REF_hold_out_UN1,16);
+			REF_hold_out_UN2_vector	 <= CONV_STD_LOGIC_VECTOR(REF_hold_out_UN2,16);
+			REF_hold_out_UN3_vector	 <= CONV_STD_LOGIC_VECTOR(REF_hold_out_UN3,16);
+			REF_hold_out_UN4_vector	 <= CONV_STD_LOGIC_VECTOR(REF_hold_out_UN4,16);
+			REF_hold_out_VP1_vector	 <= CONV_STD_LOGIC_VECTOR(REF_hold_out_VP1,16);
+			REF_hold_out_VP2_vector	 <= CONV_STD_LOGIC_VECTOR(REF_hold_out_VP2,16);
+			REF_hold_out_VP3_vector	 <= CONV_STD_LOGIC_VECTOR(REF_hold_out_VP3,16);
+			REF_hold_out_VP4_vector	 <= CONV_STD_LOGIC_VECTOR(REF_hold_out_VP4,16);
+			REF_hold_out_VN1_vector	 <= CONV_STD_LOGIC_VECTOR(REF_hold_out_VN1,16);
+			REF_hold_out_VN2_vector	 <= CONV_STD_LOGIC_VECTOR(REF_hold_out_VN2,16);
+			REF_hold_out_VN3_vector	 <= CONV_STD_LOGIC_VECTOR(REF_hold_out_VN3,16);
+			REF_hold_out_VN4_vector	 <= CONV_STD_LOGIC_VECTOR(REF_hold_out_VN4,16);
+		-----------------------------------------------------------------------------
+		end if;
+	end process;
+
+	----------------------
+	--デフォルトのMMC_PWM_GENにある変数
+	----------------------
+	
+	process(CLK100)
+	begin
+		if CLK100'event and CLK100 = '1' then
+
+			if RESET = '1' then
+				SPR				<= "00000000" & "00000000";
+				CNT_MAX_SET			<= 32767;
+				DT_SET				<= 1023;
+				CNT_PHASE_SET_UP1	<= 0;
+				CNT_PHASE_SET_UP2	<= 0;
+				CNT_PHASE_SET_UP3	<= 0;
+				CNT_PHASE_SET_UP4	<= 0;
+				CNT_PHASE_SET_UN1	<= 0;
+				CNT_PHASE_SET_UN2	<= 0;
+				CNT_PHASE_SET_UN3	<= 0;
+				CNT_PHASE_SET_UN4	<= 0;
+				CNT_PHASE_SET_VP1	<= 0;
+				CNT_PHASE_SET_VP2	<= 0;
+				CNT_PHASE_SET_VP3	<= 0;
+				CNT_PHASE_SET_VP4	<= 0;
+				CNT_PHASE_SET_VN1	<= 0;
+				CNT_PHASE_SET_VN2	<= 0;
+				CNT_PHASE_SET_VN3	<= 0;
+				CNT_PHASE_SET_VN4	<= 0;
+				CNT_PHASE_SET_WP1	<= 0;
+				CNT_PHASE_SET_WP2	<= 0;
+				CNT_PHASE_SET_WP3	<= 0;
+				CNT_PHASE_SET_WP4	<= 0;
+				CNT_PHASE_SET_WN1	<= 0;
+				CNT_PHASE_SET_WN2	<= 0;
+				CNT_PHASE_SET_WN3	<= 0;
+				CNT_PHASE_SET_WN4	<= 0;
+				CNT_PHASE_UD_SET_UP1	<= '0';
+				CNT_PHASE_UD_SET_UP2	<= '0';
+				CNT_PHASE_UD_SET_UP3	<= '0';
+				CNT_PHASE_UD_SET_UP4	<= '0';
+				CNT_PHASE_UD_SET_UN1	<= '0';
+				CNT_PHASE_UD_SET_UN2	<= '0';
+				CNT_PHASE_UD_SET_UN3	<= '0';
+				CNT_PHASE_UD_SET_UN4	<= '0';
+				CNT_PHASE_UD_SET_VP1	<= '0';
+				CNT_PHASE_UD_SET_VP2	<= '0';
+				CNT_PHASE_UD_SET_VP3	<= '0';
+				CNT_PHASE_UD_SET_VP4	<= '0';
+				CNT_PHASE_UD_SET_VN1	<= '0';
+				CNT_PHASE_UD_SET_VN2	<= '0';
+				CNT_PHASE_UD_SET_VN3	<= '0';
+				CNT_PHASE_UD_SET_VN4	<= '0';
+				CNT_PHASE_UD_SET_WP1	<= '0';
+				CNT_PHASE_UD_SET_WP2	<= '0';
+				CNT_PHASE_UD_SET_WP3	<= '0';
+				CNT_PHASE_UD_SET_WP4	<= '0';
+				CNT_PHASE_UD_SET_WN1	<= '0';
+				CNT_PHASE_UD_SET_WN2	<= '0';
+				CNT_PHASE_UD_SET_WN3	<= '0';
+				CNT_PHASE_UD_SET_WN4	<= '0';
+				CNT_EN					<= '0';
+				GATE_EN					<= '0';
+				REF_UP1				<= 0;
+				REF_UP2				<= 0;
+				REF_UP3				<= 0;
+				REF_UP4				<= 0;
+				REF_UN1				<= 0;
+				REF_UN2				<= 0;
+				REF_UN3				<= 0;
+				REF_UN4				<= 0;
+				REF_VP1				<= 0;
+				REF_VP2				<= 0;
+				REF_VP3				<= 0;
+				REF_VP4				<= 0;
+				REF_VN1				<= 0;
+				REF_VN2				<= 0;
+				REF_VN3				<= 0;
+				REF_VN4				<= 0;
+				REF_WP1				<= 0;
+				REF_WP2				<= 0;
+				REF_WP3				<= 0;
+				REF_WP4				<= 0;
+				REF_WN1				<= 0;
+				REF_WN2				<= 0;
+				REF_WN3				<= 0;
+				REF_WN4				<= 0;
+				INT_EN				<= "0000";
+				
+			elsif WR = '1' then
+				case A is
+					when x"00"	=>	CNT_MAX_SET			<= CONV_INTEGER(DW(15 downto 0));
+					when x"01"	=>	DT_SET				<= CONV_INTEGER(DW(10 downto 0));
+					when x"02"	=>	CNT_PHASE_SET_UP1	<= CONV_INTEGER(DW(15 downto 0));
+					when x"03"	=>	CNT_PHASE_SET_UP2	<= CONV_INTEGER(DW(15 downto 0));
+					when x"04"	=>	CNT_PHASE_SET_UP3	<= CONV_INTEGER(DW(15 downto 0));
+					when x"05"	=>	CNT_PHASE_SET_UP4	<= CONV_INTEGER(DW(15 downto 0));
+					when x"06"	=>	CNT_PHASE_SET_UN1	<= CONV_INTEGER(DW(15 downto 0));
+					when x"07"	=>	CNT_PHASE_SET_UN2	<= CONV_INTEGER(DW(15 downto 0));
+					when x"08"	=>	CNT_PHASE_SET_UN3	<= CONV_INTEGER(DW(15 downto 0));
+					when x"09"	=>	CNT_PHASE_SET_UN4	<= CONV_INTEGER(DW(15 downto 0));
+					when x"0A"	=>	CNT_PHASE_SET_VP1	<= CONV_INTEGER(DW(15 downto 0));
+					when x"0B"	=>	CNT_PHASE_SET_VP2	<= CONV_INTEGER(DW(15 downto 0));
+					when x"0C"	=>	CNT_PHASE_SET_VP3	<= CONV_INTEGER(DW(15 downto 0));
+					when x"0D"	=>	CNT_PHASE_SET_VP4	<= CONV_INTEGER(DW(15 downto 0));
+					when x"0E"	=>	CNT_PHASE_SET_VN1	<= CONV_INTEGER(DW(15 downto 0));
+					when x"0F"	=>	CNT_PHASE_SET_VN2	<= CONV_INTEGER(DW(15 downto 0));
+					when x"10"	=>	CNT_PHASE_SET_VN3	<= CONV_INTEGER(DW(15 downto 0));
+					when x"11"	=>	CNT_PHASE_SET_VN4	<= CONV_INTEGER(DW(15 downto 0));
+					when x"12"	=>	CNT_PHASE_SET_WP1	<= CONV_INTEGER(DW(15 downto 0));
+					when x"13"	=>	CNT_PHASE_SET_WP2	<= CONV_INTEGER(DW(15 downto 0));
+					when x"14"	=>	CNT_PHASE_SET_WP3	<= CONV_INTEGER(DW(15 downto 0));
+					when x"15"	=>	CNT_PHASE_SET_WP4	<= CONV_INTEGER(DW(15 downto 0));
+					when x"16"	=>	CNT_PHASE_SET_WN1	<= CONV_INTEGER(DW(15 downto 0));
+					when x"17"	=>	CNT_PHASE_SET_WN2	<= CONV_INTEGER(DW(15 downto 0));
+					when x"18"	=>	CNT_PHASE_SET_WN3	<= CONV_INTEGER(DW(15 downto 0));
+					when x"19"	=>	CNT_PHASE_SET_WN4	<= CONV_INTEGER(DW(15 downto 0));
+					when x"1A"	=>	CNT_PHASE_UD_SET_UP1	<= DW(0);
+					when x"1B"	=>	CNT_PHASE_UD_SET_UP2	<= DW(0);
+					when x"1C"	=>	CNT_PHASE_UD_SET_UP3	<= DW(0);
+					when x"1D"	=>	CNT_PHASE_UD_SET_UP4	<= DW(0);
+					when x"1E"	=>	CNT_PHASE_UD_SET_UN1	<= DW(0);
+					when x"1F"	=>	CNT_PHASE_UD_SET_UN2	<= DW(0);
+					when x"20"	=>	CNT_PHASE_UD_SET_UN3	<= DW(0);
+					when x"21"	=>	CNT_PHASE_UD_SET_UN4	<= DW(0);
+					when x"22"	=>	CNT_PHASE_UD_SET_VP1	<= DW(0);
+					when x"23"	=>	CNT_PHASE_UD_SET_VP2	<= DW(0);
+					when x"24"	=>	CNT_PHASE_UD_SET_VP3	<= DW(0);
+					when x"25"	=>	CNT_PHASE_UD_SET_VP4	<= DW(0);
+					when x"26"	=>	CNT_PHASE_UD_SET_VN1	<= DW(0);
+					when x"27"	=>	CNT_PHASE_UD_SET_VN2	<= DW(0);
+					when x"28"	=>	CNT_PHASE_UD_SET_VN3	<= DW(0);
+					when x"29"	=>	CNT_PHASE_UD_SET_VN4	<= DW(0);
+					when x"2A"	=>	CNT_PHASE_UD_SET_WP1	<= DW(0);
+					when x"2B"	=>	CNT_PHASE_UD_SET_WP2	<= DW(0);
+					when x"2C"	=>	CNT_PHASE_UD_SET_WP3	<= DW(0);
+					when x"2D"	=>	CNT_PHASE_UD_SET_WP4	<= DW(0);
+					when x"2E"	=>	CNT_PHASE_UD_SET_WN1	<= DW(0);
+					when x"2F"	=>	CNT_PHASE_UD_SET_WN2	<= DW(0);
+					when x"30"	=>	CNT_PHASE_UD_SET_WN3	<= DW(0);
+					when x"31"	=>	CNT_PHASE_UD_SET_WN4	<= DW(0);
+					when x"32"	=>	CNT_EN					<= DW(0);
+					when x"33"	=>	GATE_EN					<= DW(0);
+					when x"34"	=>	REF_UP1				<= CONV_INTEGER(DW(15 downto 0));
+					when x"35"	=>	REF_UP2				<= CONV_INTEGER(DW(15 downto 0));
+					when x"36"	=>	REF_UP3				<= CONV_INTEGER(DW(15 downto 0));
+					when x"37"	=>	REF_UP4				<= CONV_INTEGER(DW(15 downto 0));
+					when x"38"	=>	REF_UN1				<= CONV_INTEGER(DW(15 downto 0));
+					when x"39"	=>	REF_UN2				<= CONV_INTEGER(DW(15 downto 0));
+					when x"3A"	=>	REF_UN3				<= CONV_INTEGER(DW(15 downto 0));
+					when x"3B"	=>	REF_UN4				<= CONV_INTEGER(DW(15 downto 0));
+					when x"3C"	=>	REF_VP1				<= CONV_INTEGER(DW(15 downto 0));
+					when x"3D"	=>	REF_VP2				<= CONV_INTEGER(DW(15 downto 0));
+					when x"3E"	=>	REF_VP3				<= CONV_INTEGER(DW(15 downto 0));
+					when x"3F"	=>	REF_VP4				<= CONV_INTEGER(DW(15 downto 0));
+					when x"40"	=>	REF_VN1				<= CONV_INTEGER(DW(15 downto 0));
+					when x"41"	=>	REF_VN2				<= CONV_INTEGER(DW(15 downto 0));
+					when x"42"	=>	REF_VN3				<= CONV_INTEGER(DW(15 downto 0));
+					when x"43"	=>	REF_VN4				<= CONV_INTEGER(DW(15 downto 0));
+					when x"44"	=>	REF_WP1				<= CONV_INTEGER(DW(15 downto 0));
+					when x"45"	=>	REF_WP2				<= CONV_INTEGER(DW(15 downto 0));
+					when x"46"	=>	REF_WP3				<= CONV_INTEGER(DW(15 downto 0));
+					when x"47"	=>	REF_WP4				<= CONV_INTEGER(DW(15 downto 0));
+					when x"48"	=>	REF_WN1				<= CONV_INTEGER(DW(15 downto 0));
+					when x"49"	=>	REF_WN2				<= CONV_INTEGER(DW(15 downto 0));
+					when x"4A"	=>	REF_WN3				<= CONV_INTEGER(DW(15 downto 0));
+					when x"4B"	=>	REF_WN4				<= CONV_INTEGER(DW(15 downto 0));
+					when x"4C"	=>	INT_EN				<= DW(3 downto 0);
+					
+				
+					when x"FF"	=>	SPR			<= DW;
+					when others		=> null;
+				end case;
+			else
+				if GB = '1' then
+					GATE_EN	<= '0';
+				end if;
+			end if;
+			
+		end if;
+	end process;
+
+
+-- ====================================================
+-- MMC_PWM_FPGA_UP1
+-- ====================================================
+
+	MMCPWM_FPGA_UP1 : MMC_PWM_FPGA_SUB
+		port map(
+		CLK100				=> CLK100,
+		RESET					=> RESET,
+		
+		CNT_MAX_SET			=> tri_cnt_max,
+		CNT_PHASE_SET		=> cnt_phase_0,
+		CNT_PHASE_UD_SET	=> cnt_phase_UD_0,
+		DT_SET				=> DT_SET,
+		CNT_EN				=> CNT_EN,
+		GATE_EN				=> GATE_EN,
+		REF					=> MRate_UP1_C_4_int_hold,
+		REF_hold_out		=> REF_hold_out_UP1,
+		nGATE					=> nMMC_PWM1_FPGA_buf(3 downto 0),
+		CNT_out				=> CNT_out_UP1
+		
+			);
+			
+-- ====================================================
+-- MMC_PWM_FPGA_UP2
+-- ====================================================
+
+	MMCPWM_FPGA_UP2 : MMC_PWM_FPGA_SUB
+		port map(
+		CLK100				=> CLK100,
+		RESET					=> RESET,
+		
+		CNT_MAX_SET			=> tri_cnt_max,
+		CNT_PHASE_SET		=> cnt_phase_90,
+		CNT_PHASE_UD_SET	=> cnt_phase_UD_90,
+		DT_SET				=> DT_SET,
+		CNT_EN				=> CNT_EN,
+		GATE_EN				=> GATE_EN,
+		REF					=> MRate_UP2_C_4_int_hold,
+		REF_hold_out		=> REF_hold_out_UP2,
+		nGATE					=> nMMC_PWM1_FPGA_buf(7 downto 4),
+		CNT_out				=> CNT_out_UP2
+
+			);
+
+
+-- ====================================================
+-- MMC_PWM_FPGA_UP3
+-- ====================================================
+
+	MMCPWM_FPGA_UP3 : MMC_PWM_FPGA_SUB
+		port map(
+		CLK100				=> CLK100,
+		RESET					=> RESET,
+		
+		CNT_MAX_SET			=> tri_cnt_max,
+		CNT_PHASE_SET		=> cnt_phase_180,
+		CNT_PHASE_UD_SET	=> cnt_phase_UD_180,
+		DT_SET				=> DT_SET,
+		CNT_EN				=> CNT_EN,
+		GATE_EN				=> GATE_EN,
+		REF					=> MRate_UP3_C_4_int_hold,
+		REF_hold_out		=> REF_hold_out_UP3,
+		nGATE					=> nMMC_PWM1_FPGA_buf(11 downto 8),
+		CNT_out				=> CNT_out_UP3
+
+			);
+
+-- ====================================================
+-- MMC_PWM_FPGA_UP4
+-- ====================================================
+
+	MMCPWM_FPGA_UP4 : MMC_PWM_FPGA_SUB
+		port map(
+		CLK100				=> CLK100,
+		RESET					=> RESET,
+		
+		CNT_MAX_SET			=> tri_cnt_max,
+		CNT_PHASE_SET		=> cnt_phase_270,
+		CNT_PHASE_UD_SET	=> cnt_phase_UD_270,
+		DT_SET				=> DT_SET,
+		CNT_EN				=> CNT_EN,
+		GATE_EN				=> GATE_EN,
+		REF					=> MRate_UP4_C_4_int_hold,
+		REF_hold_out		=> REF_hold_out_UP4,
+		nGATE					=> nMMC_PWM1_FPGA_buf(15 downto 12),
+		CNT_out				=> CNT_out_UP4
+
+			);
+
+-- ====================================================
+-- MMC_PWM_FPGA_UN1
+-- ====================================================
+
+	MMCPWM_FPGA_UN1 : MMC_PWM_FPGA_SUB
+		port map(
+		CLK100				=> CLK100,
+		RESET					=> RESET,
+		
+		CNT_MAX_SET			=> tri_cnt_max,
+		CNT_PHASE_SET		=> cnt_phase_45,
+		CNT_PHASE_UD_SET	=> cnt_phase_UD_45,
+		DT_SET				=> DT_SET,
+		CNT_EN				=> CNT_EN,
+		GATE_EN				=> GATE_EN,
+		REF					=> MRate_UN1_C_4_int_hold,
+		REF_hold_out		=> REF_hold_out_UN1,
+		nGATE					=> nMMC_PWM1_FPGA_buf(19 downto 16),
+		CNT_out				=> CNT_out_UN1
+
+			);
+			
+-- ====================================================
+-- MMC_PWM_FPGA_UN2
+-- ====================================================
+
+	MMCPWM_FPGA_UN2 : MMC_PWM_FPGA_SUB
+		port map(
+		CLK100				=> CLK100,
+		RESET					=> RESET,
+		
+		CNT_MAX_SET			=> tri_cnt_max,
+		CNT_PHASE_SET		=> cnt_phase_135,
+		CNT_PHASE_UD_SET	=> cnt_phase_UD_135,
+		DT_SET				=> DT_SET,
+		CNT_EN				=> CNT_EN,
+		GATE_EN				=> GATE_EN,
+		REF					=> MRate_UN2_C_4_int_hold,
+		REF_hold_out		=> REF_hold_out_UN2,
+		nGATE					=> nMMC_PWM1_FPGA_buf(23 downto 20),
+		CNT_out				=> CNT_out_UN2
+
+			);
+
+
+-- ====================================================
+-- MMC_PWM_FPGA_UN3
+-- ====================================================
+
+	MMCPWM_FPGA_UN3 : MMC_PWM_FPGA_SUB
+		port map(
+		CLK100				=> CLK100,
+		RESET					=> RESET,
+		
+		CNT_MAX_SET			=> tri_cnt_max,
+		CNT_PHASE_SET		=> cnt_phase_225,
+		CNT_PHASE_UD_SET	=> cnt_phase_UD_225,
+		DT_SET				=> DT_SET,
+		CNT_EN				=> CNT_EN,
+		GATE_EN				=> GATE_EN,
+		REF					=> MRate_UN3_C_4_int_hold,
+		REF_hold_out		=> REF_hold_out_UN3,
+		nGATE					=> nMMC_PWM1_FPGA_buf(27 downto 24),
+		CNT_out				=> CNT_out_UN3
+
+			);
+
+-- ====================================================
+-- MMC_PWM_FPGA_UN4
+-- ====================================================
+
+	MMCPWM_FPGA_UN4 : MMC_PWM_FPGA_SUB
+		port map(
+		CLK100				=> CLK100,
+		RESET					=> RESET,
+		
+		CNT_MAX_SET			=> tri_cnt_max,
+		CNT_PHASE_SET		=> cnt_phase_315,
+		CNT_PHASE_UD_SET	=> cnt_phase_UD_315,
+		DT_SET				=> DT_SET,
+		CNT_EN				=> CNT_EN,
+		GATE_EN				=> GATE_EN,
+		REF					=> MRate_UN4_C_4_int_hold,
+		REF_hold_out		=> REF_hold_out_UN4,
+		nGATE					=> nMMC_PWM1_FPGA_buf(31 downto 28),
+		CNT_out				=> CNT_out_UN4
+
+			);
+
+
+
+-- ====================================================
+-- MMC_PWM_FPGA_VP1
+-- ====================================================
+
+	MMCPWM_FPGA_VP1 : MMC_PWM_FPGA_SUB
+		port map(
+		CLK100				=> CLK100,
+		RESET					=> RESET,
+		
+		CNT_MAX_SET			=> tri_cnt_max,
+		CNT_PHASE_SET		=> cnt_phase_0,
+		CNT_PHASE_UD_SET	=> cnt_phase_UD_0,
+		DT_SET				=> DT_SET,
+		CNT_EN				=> CNT_EN,
+		GATE_EN				=> GATE_EN,
+		REF					=> MRate_VP1_C_4_int_hold,
+		REF_hold_out		=> REF_hold_out_VP1,
+		nGATE					=> nMMC_PWM1_FPGA_buf(35 downto 32),
+		CNT_out				=> CNT_out_VP1
+
+			);
+
+
+-- ====================================================
+-- MMC_PWM_FPGA_VP2
+-- ====================================================
+
+	MMCPWM_FPGA_VP2 : MMC_PWM_FPGA_SUB
+		port map(
+		CLK100				=> CLK100,
+		RESET					=> RESET,
+		
+		CNT_MAX_SET			=> tri_cnt_max,
+		CNT_PHASE_SET		=> cnt_phase_90,
+		CNT_PHASE_UD_SET	=> cnt_phase_UD_90,
+		DT_SET				=> DT_SET,
+		CNT_EN				=> CNT_EN,
+		GATE_EN				=> GATE_EN,
+		REF					=> MRate_VP2_C_4_int_hold,
+		REF_hold_out		=> REF_hold_out_VP2,
+		nGATE					=> nMMC_PWM1_FPGA_buf(39 downto 36),
+		CNT_out				=> CNT_out_VP2
+
+			);
+
+
+-- ====================================================
+-- MMC_PWM_FPGA_VP3
+-- ====================================================
+
+	MMCPWM_FPGA_VP3 : MMC_PWM_FPGA_SUB
+		port map(
+		CLK100				=> CLK100,
+		RESET					=> RESET,
+		
+		CNT_MAX_SET			=> tri_cnt_max,
+		CNT_PHASE_SET		=> cnt_phase_180,
+		CNT_PHASE_UD_SET	=> cnt_phase_UD_180,
+		DT_SET				=> DT_SET,
+		CNT_EN				=> CNT_EN,
+		GATE_EN				=> GATE_EN,
+		REF					=> MRate_VP3_C_4_int_hold,
+		REF_hold_out		=> REF_hold_out_VP3,
+		nGATE					=> nMMC_PWM1_FPGA_buf(43 downto 40),
+		CNT_out				=> CNT_out_VP3
+
+			);
+
+-- ====================================================
+-- MMC_PWM_FPGA_VP4
+-- ====================================================
+
+	MMCPWM_FPGA_VP4 : MMC_PWM_FPGA_SUB
+		port map(
+		CLK100				=> CLK100,
+		RESET					=> RESET,
+		
+		CNT_MAX_SET			=> tri_cnt_max,
+		CNT_PHASE_SET		=> cnt_phase_270,
+		CNT_PHASE_UD_SET	=> cnt_phase_UD_270,
+		DT_SET				=> DT_SET,
+		CNT_EN				=> CNT_EN,
+		GATE_EN				=> GATE_EN,
+		REF					=> MRate_VP4_C_4_int_hold,
+		REF_hold_out		=> REF_hold_out_VP4,
+		nGATE					=> nMMC_PWM1_FPGA_buf(47 downto 44),
+		CNT_out				=> CNT_out_VP4
+
+			);
+
+-- ====================================================
+-- MMC_PWM_FPGA_VN1
+-- ====================================================
+
+	MMCPWM_FPGA_VN1 : MMC_PWM_FPGA_SUB
+		port map(
+		CLK100				=> CLK100,
+		RESET					=> RESET,
+		
+		CNT_MAX_SET			=> tri_cnt_max,
+		CNT_PHASE_SET		=> cnt_phase_45,
+		CNT_PHASE_UD_SET	=> cnt_phase_UD_45,
+		DT_SET				=> DT_SET,
+		CNT_EN				=> CNT_EN,
+		GATE_EN				=> GATE_EN,
+		REF					=> MRate_VN1_C_4_int_hold,
+		REF_hold_out		=> REF_hold_out_VN1,
+		nGATE					=> nMMC_PWM2_FPGA_buf(3 downto 0),
+		CNT_out				=> CNT_out_VN1
+
+			);
+			
+-- ====================================================
+-- MMC_PWM_FPGA_VN2
+-- ====================================================
+
+	MMCPWM_FPGA_VN2 : MMC_PWM_FPGA_SUB
+		port map(
+		CLK100				=> CLK100,
+		RESET					=> RESET,
+		
+		CNT_MAX_SET			=> tri_cnt_max,
+		CNT_PHASE_SET		=> cnt_phase_135,
+		CNT_PHASE_UD_SET	=> cnt_phase_UD_135,
+		DT_SET				=> DT_SET,
+		CNT_EN				=> CNT_EN,
+		GATE_EN				=> GATE_EN,
+		REF					=> MRate_VN2_C_4_int_hold,
+		REF_hold_out		=> REF_hold_out_VN2,
+		nGATE					=> nMMC_PWM2_FPGA_buf(7 downto 4),
+		CNT_out				=> CNT_out_VN2
+
+			);
+
+
+-- ====================================================
+-- MMC_PWM_FPGA_VN3
+-- ====================================================
+
+	MMCPWM_FPGA_VN3 : MMC_PWM_FPGA_SUB
+		port map(
+		CLK100				=> CLK100,
+		RESET					=> RESET,
+		
+		CNT_MAX_SET			=> tri_cnt_max,
+		CNT_PHASE_SET		=> cnt_phase_225,
+		CNT_PHASE_UD_SET	=> cnt_phase_UD_225,
+		DT_SET				=> DT_SET,
+		CNT_EN				=> CNT_EN,
+		GATE_EN				=> GATE_EN,
+		REF					=> MRate_VN3_C_4_int_hold,
+		REF_hold_out		=> REF_hold_out_VN3,
+		nGATE					=> nMMC_PWM2_FPGA_buf(11 downto 8),
+		CNT_out				=> CNT_out_VN3
+
+			);
+
+-- ====================================================
+-- MMC_PWM_FPGA_VN4
+-- ====================================================
+
+	MMCPWM_FPGA_VN4 : MMC_PWM_FPGA_SUB
+		port map(
+		CLK100				=> CLK100,
+		RESET					=> RESET,
+		
+		CNT_MAX_SET			=> tri_cnt_max,
+		CNT_PHASE_SET		=> cnt_phase_315,
+		CNT_PHASE_UD_SET	=> cnt_phase_UD_315,
+		DT_SET				=> DT_SET,
+		CNT_EN				=> CNT_EN,
+		GATE_EN				=> GATE_EN,
+		REF					=> MRate_VN4_C_4_int_hold,
+		REF_hold_out		=> REF_hold_out_VN4,
+		nGATE					=> nMMC_PWM2_FPGA_buf(15 downto 12),
+		CNT_out				=> CNT_out_VN4
+
+			);
+
+-- ====================================================
+-- cnt_clk
+-- ====================================================
+
+	count : cnt_clk_3
+		port map(
+			CLK100 => CLK100,
+			cnt_10k => cnt_10k_B,
+			cnt_20k => cnt_20k_B,
+			cnt_100k => cnt_100k_B,
+			cnt_1M => cnt_1M_B,
+			cnt_soft => cnt_soft_B,
+			cnt_10k_ref => cnt_10k_ref_B,
+			cnt_20k_ref => cnt_20k_ref_B,
+			cnt_100k_ref => cnt_100k_ref_B,
+			counter_1M => counter_1M_B,
+			clk100k => clk100k_B,
+			clk500k => clk500k_B,
+			clk1M => clk1M_B,
+			cnt_EN => cnt_EN,
+			cnt_10k_0 => cnt_10k_0_B,
+			cnt_10k_90 => cnt_10k_90_B ,
+			cnt_10k_180 => cnt_10k_180_B,
+			cnt_10k_270 => cnt_10k_270_B
+			);
+			
+--追加ver2.5.6--
+---- ====================================================
+---- icon
+---- ====================================================
+--
+--	icon_pwm_fpga_gen : icon1
+--		port map(
+--			CONTROL0			=>	CONTROL0
+--			);
+--
+---- ====================================================
+---- ila
+---- ====================================================
+--
+--	ila_pwm_fpga_gen : ila1
+--		port map(
+--        CONTROL         =>	CONTROL0,
+----			CLK		         =>	CLK100,  	--100Mクロック
+----			CLK		         =>	CLK100k_B,  --100kクロック
+--			CLK		         =>	CLK500k_B,  --500kクロック
+--
+--        TRIG0	         =>	REF_hold_out_UP1_vector,--制御量u(正規化あと_hold後:UP1)
+----		  TRIG1	         =>	REF_UP1_vector,    		--制御量u(headspring:UP1)
+----		  TRIG2	         =>	CNT_out_UP1_vector,     --三角波:UP1   
+--		  TRIG1				=> VAu,                    --平均値制御出力(u相)          -- sfix16_En6
+--		  TRIG2				=> vb_up1,                 --バランス制御出力(up1)          -- sfix16_En6
+--		  TRIG3				=> Iz_UP_N_out_BB,         --Iup_10kHz                 -- sfix16_En9
+--		  TRIG4				=> Voref_BB,         	   --Voref                     -- sfix16_En6
+--		  TRIG5				=> dVoref_out_BB,         	--dVoref                    -- sfix16_En6
+--		  TRIG6				=> Vo_N_out_BB,				--Vo                        -- sfix16_En6
+----		  TRIG7				=> IC_N_out_BB,         	--IC                        -- sfix16_En9
+--		  TRIG7				=> QMDB_OUTPUT_out_BB,     --QMDBout                   -- sfix16_En6
+----		  TRIG9				=> Vdc_N_out_BB         	--Vdc_N                     -- sfix16_En6
+--		  TRIG8				=> soft_cnt_out_BB,         --soft_cnt_out_BB,cnt80k_debug_BB           
+--		  TRIG9	         =>	MRate_UP1,              --制御量u(正規化前:UP1)
+--		  TRIG10(0)			=> clk10k_BBB         	   --clk10k_BBB                
+--
+--
+--
+------    TRIG1	         =>	MRate_UP1_C_4,
+----      TRIG1	         =>	REF_hold_out_UP1_vector,--制御量u(正規化あと_hold後:UP1)
+----  	  TRIG2	         =>	CNT_out_UP1_vector,     --三角波:UP1
+----  	  TRIG3	         =>	REF_UP1_vector,         --制御量u(headspring:UP1)
+----		  TRIG4				=> nMMC_PWM1_FPGA_buf2_UP1,--ゲート信号:UP1
+----		  TRIG5				=> VAu,                    --平均値制御出力(u相)
+----		  TRIG6				=> vb_up1,                 --バランス制御出力(up1)
+------	  TRIG7				=> VA_no_limit_U           --VAと同じ
+----		  TRIG7				=> Voref_BB,           --FPGA版Voref
+----		  TRIG8				=> Iz_UP_N_debug_out_BB,   --Iup_debug_100MHz
+----		  TRIG9				=> Iz_UP_N_out_BB          --Iup_debug_10kHz
+--		  
+----        TRIG4	         =>	MRate_UP1_int_2,
+----        TRIG5	         =>	MRate_UN1_int_2,
+----        TRIG6	         =>	MRate_VP1_int_2,
+----        TRIG7	         =>	MRate_VN1_int_2,
+----        TRIG8	         =>	MRate_UP1_C,
+----        TRIG9	         =>	MRate_UN1_C,
+----        TRIG10	         =>	MRate_VP1_C,
+----        TRIG11	         =>	MRate_VN1_C,
+----        TRIG12	         =>	MRate_UP1_C_2,
+----        TRIG13	         =>	MRate_UN1_C_2,
+----        TRIG14	         => MRate_VP1_C_2,	
+----        TRIG15	         => MRate_VN1_C_2	
+--		  );
+
+-------------
+
+	--単相
+	--nMMC_PWM1_FPGA_buf2 <= nMMC_PWM1_FPGA_buf and "11111111" & "11111111" & "11111111" & "11111111" & "11111111" & "11111111" ; 
+	--nMMC_PWM2_FPGA_buf2 <= nMMC_PWM2_FPGA_buf and "11111111" & "11111111" & "11111111" & "11111111" & "11111111" & "11111111" ; 
+--三相モード--
+	--単相モード(w相を0)--
+	nMMC_PWM1_FPGA_buf2 <= nMMC_PWM1_FPGA_buf and "11111111" & "11111111" & "11111111" & "11111111" & "11111111" & "11111111" ; 
+	nMMC_PWM2_FPGA_buf2 <= nMMC_PWM2_FPGA_buf and "00000000" & "00000000" & "00000000" & "00000000" & "11111111" & "11111111" ; 
+
+
+	
+	nMMC_PWM1_FPGA <= nMMC_PWM1_FPGA_buf2;
+	nMMC_PWM2_FPGA <= nMMC_PWM2_FPGA_buf2; 			
+
+	nMMC_PWM1_FPGA_buf2_UP1(0) <= nMMC_PWM1_FPGA_buf2(0);
+	
+	GATE_EN_out <= GATE_EN;
+
+end Behavioral;
+
+
+
+
+
+
+\end{mylisting}

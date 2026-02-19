@@ -1,0 +1,112 @@
+﻿\setlength{\parindent}{2ex}
+\setlength{\textwidth}{171.9mm}
+\setlength{\textheight}{244mm} %org 25cm
+\setlength{\evensidemargin}{-6.0mm}
+\setlength{\oddsidemargin}{-6.0mm}
+\setlength{\topmargin}{-3.5mm} %org -15mm
+\setlength{\columnsep}{7mm}
+\setlength{\hoffset}{0mm}
+\setlength{\headsep}{0mm}
+\setlength{\marginparwidth}{0mm}
+\setlength{\marginparsep}{0mm}
+\setlength{\headheight}{0mm}
+
+\renewcommand{\figurename}{Fig. }
+\renewcommand{\tablename}{Table}
+
+%フロートを配置するときの距離に関係するパラメータ
+\setlength\floatsep{1mm} % フロート同士の距離
+\setlength\textfloatsep{1mm} % ページの上下にあるフロートと、本文との距離
+\setlength\intextsep{1mm} % ページの中央にあるフロートと、本文との距離
+
+%\renewcommand{\abstractname}{Abstract}
+\newcommand{\ID}{11FMR29}
+\newcommand{\advisor}{石川~潤　教授}
+\newcommand{\judge}{岩瀬~将美　准教授}
+
+\def\eqnarray{%
+	\stepcounter{equation}%
+	\def\@currentlabel{\p@equation\theequation}%
+	\global\@eqnswtrue
+	\m@th
+	\global\@eqcnt\z@
+	\tabskip\@centering
+	\let\\\@eqncr
+	$$\everycr{}\halign to\displaywidth\bgroup
+	\hskip\@centering$\displaystyle\tabskip\z@skip{##}$\@eqnsel
+	&\global\@eqcnt\@ne \hfil${{}##{}}$\hfil
+	&\global\@eqcnt\tw@ $\displaystyle{##}$\hfil\tabskip\@centering
+	&\global\@eqcnt\thr@@ \hb@xt@\z@\bgroup\hss##\egroup
+	\tabskip\z@skip\cr
+}
+\makeatletter
+	\global\let\@abstract\@empty
+	\global\let\@dept\@empty
+	\global\let\@advisor\@empty
+
+  \def\@maketitle{%
+   \vbox{\hsize\textwidth \linewidth\hsize
+    \begin{center}
+	    {{\gt\sf\Large {\@title} \\[0.7mm]}}\vskip 2ex
+    \end{center}
+    \begin{flushright}
+    	{研究指導教員\advisor\hspace{2zw}\ID~~\@author \\[0.5mm]}
+%    	{}
+    \end{flushright}
+%	{\large \@date}\vskip 3ex
+    \@ifundefined{@abstract}{}{
+    \parbox{\textwidth}{\setlength{\baselineskip}{0.0mm}{{\bf\small Abstract:} \@abstract}}\vskip 4ex % 修正
+     \gdef\@abstract{}}}}
+  \long\def\abstract#1{\long\gdef\@abstract{#1}}
+
+\renewcommand{\section}{\@startsection{section}{1}{\z@}%
+   {2.5ex \@plus1ex \@minus1.5ex}%
+   {.5ex \@plus.3\Cvs}%
+   {\reset@font\sf\large\bfseries}}
+\renewcommand{\subsection}{\@startsection{subsection}{2}{\z@}%
+   {2.5ex \@plus1ex \@minus1.5ex}%
+   {.5ex \@plus.3\Cvs}%
+   {\reset@font\sf\normalsize\bfseries}}
+\renewcommand{\subsubsection}{\@startsection{subsubsection}{3}{\z@}%
+   {2.5ex \@plus1ex \@minus1.5ex}%
+   {.5ex \@plus.3\Cvs}%
+   {\reset@font\sf\normalsize\bfseries}}
+
+\long\def\@makecaption#1#2{%
+  \vskip\abovecaptionskip
+  \iftdir\sbox\@tempboxa{#1\hskip1zw#2}%
+    \else\sbox\@tempboxa{{\sf#1. \gt#2}}%
+  \fi
+  \ifdim \wd\@tempboxa >\hsize
+    \iftdir #1\hskip1zw#2\relax\par
+      \else {\sf#1. \gt#2}\relax\par\fi
+  \else
+    \global \@minipagefalse
+    \hbox to\hsize{\hfil\box\@tempboxa\hfil}%
+  \fi
+  \vskip\belowcaptionskip}
+
+\def\fnum@figure{\small\figurename~\thefigure}
+\renewenvironment{figure}
+               {\@float{figure}}
+               {\end@float}
+\renewenvironment{figure*}
+               {\@dblfloat{figure}}
+               {\end@dblfloat}
+\def\fnum@table{\small\tablename~\thetable}
+\renewenvironment{table}
+               {\small\@float{table}}
+               {\end@float}
+\renewenvironment{table*}
+               {\small\@dblfloat{table}}
+               {\end@dblfloat}
+\makeatother
+
+\usepackage{graphicx,amsmath}
+\renewcommand{\kanjifamilydefault}{\mcdefault}
+\renewcommand{\rmdefault}{phv} % Arial
+\renewcommand{\sfdefault}{phv} % Arial
+\usepackage{times}
+\renewcommand{\baselinestretch}{0.872}
+
+

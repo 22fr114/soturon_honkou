@@ -1,0 +1,116 @@
+%Root main.tex
+%---------------------------------------------------------------------------
+%付録A　付録
+%---------------------------------------------------------------------------
+
+\chapter{PSIMを用いたシミュレーション}
+\thispagestyle{fancy}
+\label{chap:MATLAB}
+　本研究ではプラス株式会社のPSIMを用いてシミュレーションを行った．PSIMではパワーエレクトロニクスの解析，制御系回路設計，インバータ，モータドライブの研究に対して有効なシミュレーション環境が提供されている．シミュレーションにおける制御部分は，Cブロックに書き込むことによって実装することができる．表\ref{tabA.1}にPSIMの実行環境を示す．
+ 
+\begin{table}[h]
+ \center
+ \caption{PSIMの実行環境}
+ \label{tabA.1}
+ \small
+ \begin{tabular}{c|c} \hline \hline
+  実行OS    &   ソフトバージョン	\\ \hline
+Windows10    & PSIM 2021a	\\ \hline
+ \end{tabular}
+\end{table}
+
+表\ref{tabA.2}に本研究で使用したPSIMの実行ファイル名，保存場所を示す．
+
+\begin{table}[h]
+ \center
+ \caption{ファイル情報}
+ \label{tabA.2}
+ \small
+ \begin{tabular}{c|c} \hline \hline
+  実行ファイル名    &   theree\_phase\_MSSRDBDC\_soturo	\\ \hline
+　 保存場所    & 「babel」/「2022年度」/「個人」/「B4」/「kubo」/「卒業研究」	\\ \hline
+ \end{tabular}
+\end{table}
+
+本検証で使用したシミュレーションファイルは，theree\_phase\_MSSRDBDC\_soturonのみであり，
+系統擾乱発生時のシミュレーションは，\ref{FigA.2}のように交流電源を付け加えることで行なった．\par
+アンノミナル時のシミュレーションは，図\ref{FigA.6}のパラメータファイルを表\ref{Tab3.2}のように変更することで行なった．\par
+DC-MSSRDB及び，DC-SRDBのシミュレーションは，図\ref{FigA.3}のCブロック内のプログラムを変更することで行なった．DC-MSSRDB及び，DC-SRDB制御を実行する際の変更箇所は，リストA.1のプログラムに直接コメントアウトして示している．
+
+\section{PSIMによるシミュレーション}
+図\ref{FigA.1}に定常運転時の連携リアクトルなし三相系統連系システムを主回路図を示す．
+
+\begin{figure}[ht]
+    \center
+    \includegraphics[width=140mm]{image/appendixA/FigA.1.png}
+    \caption{定常運転時の連携リアクトルなし三相系統連系システムを主回路図}
+    \label{FigA.1}
+\end{figure}
+
+図\ref{FigA.2}に系統擾乱発生時の連携リアクトルなし三相系統連系システムを主回路図を示す．
+
+\newpage
+
+\begin{figure}[ht]
+    \center
+    \includegraphics[width=140mm]{image/appendixA/FigA.2.png}
+    \caption{系統擾乱発生時の連携リアクトルなし三相系統連系システムを主回路図}
+    \label{FigA.2}
+\end{figure}
+
+図\ref{FigA.2}について，系統電圧を模擬した交流電源について，U相，V相，W相側にそれぞれ交流電源が3個ずつ付いている．それぞれの相について左側の交流電源は系統電圧を表している．中央の交流電源は，系統電圧を瞬時低下させるために用いる．右側の交流電源は，瞬時低下した交流電源を復帰させるために用いている．\par
+図\ref{FigA.1}，図\ref{FigA.2}について，系統システムの制御に用いる状態変数の電流，電圧はそれぞれセンサから値を取得，もしくは数値計算によって導出する．本システムでの制御対象はフィルタインダクタに流れる電流$I_{L1}$である．図\ref{FigA.3}に制御と状態変数のホールドを行うモジュールを示す．
+
+
+\begin{figure}[ht]
+    \center
+    \includegraphics[width=50mm]{image/appendixA/FigA.3.png}
+    \caption{制御と状態変数のホールドを行うモジュール}
+    \label{FigA.3}
+\end{figure}
+
+\newpage
+
+図\ref{FigA.3}のCブロックでは，電流指令値の生成，デッドビート制御，パルス指令値の生成などを行なっている．図\ref{FigA.4}に　三角波比較のモジュールを示す．
+
+\begin{figure}[ht]
+    \center
+    \includegraphics[width=80mm]{image/appendixA/FigA.4.png}
+    \caption{三角波比較のモジュール}
+    \label{FigA.4}
+\end{figure}
+
+\newpage
+
+図\ref{FigA.4}では，Cブロックで生成したU相のパルス$u_{u}$，V相のパルス指令値$u_{v}$，w相のパルス指令値$u_{w}$について三角波比較を比較を行い，インバータのゲート信号を生成する．図\ref{FigA.5}に　デッドタイム生成モジュールのモジュールを示す．
+
+\begin{figure}[ht]
+    \center
+    \includegraphics[width=140mm]{image/appendixA/FigA.5.png}
+    \caption{デッドタイム生成モジュールのモジュール}
+    \label{FigA.5}
+\end{figure}
+
+図\ref{FigA.5}では，三角波比較により生成したゲート信号に対してデッドタイム処理を行うことでインバータの各レグのアームが同時にONになるのを防ぐ処理を行う．
+
+図\ref{FigA.6}に　パラメータを示す．
+
+\begin{figure}[ht]
+    \center
+    \includegraphics[width=60mm]{image/appendixA/FigA.6.png}
+    \caption{パラメータファイル}
+    \label{FigA.6}
+\end{figure}
+
+図\ref{FigA.6}では，回路のパラメータやキャリア周期，サンプリング周期などを書き込むファイルである．
+
+\section{DC-MSSRDB\_Control}
+連携リアクトルなし三相系統連系システムにおけるDC-MSSRDB制御のプログラリストをリスト1に示す．
+
+%\inputminted{vhdl}{image/appendixC/MSDB_Control.vhd}
+\begin{center}
+\label{lisA.1}
+    ソースコードA.1：DC-MSSRDB\_Control
+\lstinputlisting[language=c]{image/appendixA/lisA.1.c}
+\end{center}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

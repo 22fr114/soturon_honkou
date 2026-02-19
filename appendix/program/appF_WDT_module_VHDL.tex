@@ -1,0 +1,138 @@
+%Root main.tex
+%---------------------------------------------------------------------------
+%付録A　付録
+%---------------------------------------------------------------------------
+%
+%\lstnewenvironment{mylisting}[1][]
+%    {\lstset{
+%        frame=single,
+%        numbersep=10pt,
+%        tabsize=2,
+%        #1
+%    }
+%}{}
+\begin{mylisting}[language=VHDL,caption=WDTモジュール,label=appF_WDT_module_VHDL]
+
+----------------------------------------------------------------------------------
+-- FPGA Logic for MMC Controller Board
+-- MMC WDT Logic
+--
+--		Logic No.:		HSP0056-DA0-0001
+--		Target Board:	HSP0056-B00-0001
+--		Target FPGA:	XC6SLX75-2FGG676C
+--
+--		Version:		1.0 Build1
+--		Date:			2016/09/05
+--		Copyright:		Headspring Inc.
+--
+----------------------------------------------------------------------------------
+library IEEE;
+Library UNISIM;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_SIGNED.ALL;
+use UNISIM.vcomponents.all;
+
+entity MMC_WDT is
+	Port (
+		CLK100		: in	std_logic;
+		RESET		: in	std_logic;
+		A			: in	std_logic_vector(7 downto 0);
+		DW			: in	std_logic_vector(15 downto 0);
+		DR			: out	std_logic_vector(15 downto 0)	:= "00000000" & "00000000";
+		RD			: in	std_logic;
+		WR			: in	std_logic;
+		
+		WDT_ON		: out	std_logic						:= '0';
+		ERROR		: out	std_logic						:= '0'
+		);
+end MMC_WDT;
+
+
+architecture Behavioral of MMC_WDT is
+
+	signal SPR					: std_logic_vector(15 downto 0)		:= "00000000" & "00000000";
+	signal WDT_OV_CYCLE			: std_logic_vector(15 downto 0)		:= "00000000" & "00000000";
+	signal WDT_EN				: std_logic							:= '0';
+	signal WDT_ERR				: std_logic							:= '0';
+	signal WDT_CLEAR			: std_logic							:= '0';
+	signal PRE_CNT				: integer range 0 to 99				:= 99;
+	signal WDT_CNT				: std_logic_vector(15 downto 0)		:= "11111111" & "11111111";
+
+
+
+begin
+	process(CLK100)
+	begin
+		if CLK100'event and CLK100 = '1' then
+			if RD = '1' then
+				case A is
+					when x"00"	=>	DR <= WDT_OV_CYCLE;
+					when x"01"	=>	DR <= "00000000" & "0000000" & WDT_EN;
+					when x"03"	=>	DR <= "00000000" & "0000000" & WDT_ERR;
+				
+					when x"FF"	=>	DR <= SPR;
+					when others	=>	DR <= "00000000" & "00000000";
+				end case;
+			end if;
+
+			if RESET = '1' then
+				SPR				<= "00000000" & "00000000";
+				WDT_CLEAR		<= '0';
+				WDT_OV_CYCLE	<= "00000000" & "00000000";
+				WDT_EN			<= '0';
+			elsif WR = '1' then
+				case A is
+					when x"00"	=>	if WDT_EN = '0' then						-- 一度 WDT_ENを'1'にすると書き換え不可能
+										WDT_OV_CYCLE		<= DW;
+									end if;
+					when x"01"	=>	if WDT_EN = '0' then						-- 一度 WDT_ENを'1'にすると書き換え不可能
+										WDT_EN				<= DW(0);
+									end if;
+					when x"02"	=>	if DW = x"AA55" then
+										WDT_CLEAR <= '1';
+									end if;
+				
+					when x"FF"	=>	SPR			<= DW;
+					when others		=> null;
+				end case;
+			else
+				WDT_CLEAR <= '0';
+			end if;
+			
+			
+			if RESET = '1' then
+				PRE_CNT		<= 99;
+				WDT_CNT		<= "11111111" & "11111111";
+				WDT_ERR		<= '0';
+			elsif WDT_EN = '0' then
+				PRE_CNT		<= 99;
+				WDT_CNT		<= WDT_OV_CYCLE;
+			else
+				if WDT_CNT = "00000000" & "00000000" then						-- エラー状態になると解除不能になる
+					WDT_ERR		<= '1';
+				elsif WDT_CLEAR = '1' then
+					PRE_CNT		<= 99;
+					WDT_CNT		<= WDT_OV_CYCLE;
+				elsif PRE_CNT = 0 then
+					PRE_CNT		<= 99;
+					WDT_CNT		<= WDT_CNT - '1';
+				else
+					PRE_CNT	<= PRE_CNT - 1;
+				end if;
+			end if;
+			
+			
+			
+		end if;
+	end process;
+	
+	ERROR	<= WDT_ERR;
+	WDT_ON	<= WDT_EN;
+
+
+end Behavioral;
+
+
+
+\end{mylisting}

@@ -1,0 +1,2034 @@
+%Root main.tex
+%---------------------------------------------------------------------------
+%付録A　付録
+%---------------------------------------------------------------------------
+
+%\lstnewenvironment{mylisting}[1][]
+%    {\lstset{
+%        frame=single,
+%        numbersep=10pt,
+%        tabsize=2,
+%        #1
+%    }
+%}{}
+\begin{mylisting}[language=VHDL,caption=トップモジュール,label=appF_Top_module_VHDL]
+
+----------------------------------------------------------------------------------
+-- FPGA Logic for MMC Controller Board
+--
+--		Logic No.:		HSP0056-DA0-0001
+--		Target Board:	HSP0056-B00-0001
+--		Target FPGA:	XC6SLX75-2FGG676C
+--
+--		Version:		1.0 Build4
+--		Date:			2016/12/15
+--		Copyright:		Headspring Inc.
+--
+----------------------------------------------------------------------------------
+library IEEE;
+Library UNISIM;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use UNISIM.vcomponents.all;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+
+entity top is
+	generic (
+		FPGA_VERSION_MAJOR		: natural := 1;			-- 4bit
+		FPGA_VERSION_MINOR		: natural := 0;			-- 4bit
+		FPGA_VERSION_BUILD		: natural := 4			-- 8bit
+	);
+
+	Port ( 
+		-- ====================
+		-- CLK and Reset
+		-- ====================
+		CLK20_IN			: in std_logic;
+		nRESET_IN			: in std_logic;
+
+		BUS_CLK_IN			: in std_logic;
+
+		-- ====================
+		-- TI Bus
+		-- ====================
+		BUS_A_IN				: in  std_logic_vector (15 downto 0);
+		BUS_BA1_IN				: in  std_logic;
+		BUS_D_IO				: inout  std_logic_vector (15 downto 0);
+		nBUS_CS2_IN				: in  std_logic;
+		nBUS_CS3_IN				: in  std_logic;
+		nBUS_RD_IN				: in  std_logic;
+		nBUS_WR_IN				: in  std_logic;
+		nBUS_WAIT_OUT			: out std_logic;
+		BUS_RnW_IN				: in  std_logic;
+
+
+		-- ====================
+		-- DIO	(External I/O)
+		-- ====================
+		DI_IN					: in  std_logic_vector (15 downto 0);
+		DO_OUT					: out std_logic_vector (15 downto 0);
+
+		nLED_OUT				: out std_logic_vector (3 downto 0);
+		DSW_IN					: in  std_logic_vector (3 downto 0);
+		DSW_BOOT_IN				: in  std_logic_vector (1 downto 0);
+
+		-- ====================
+		-- DIO	(TI CPU)
+		-- ====================
+		DI_OUT					: out std_logic_vector (15 downto 0);
+		DO_IN					: in  std_logic_vector (15 downto 0);
+
+		-- ====================
+		-- Gate Signal
+		-- ====================
+		INV_PWM_IN				: in  std_logic_vector (11 downto 0);
+		nINV_PWM_OUT			: out  std_logic_vector (11 downto 0);
+		nMMC_PWM1_OUT			: out  std_logic_vector (47 downto 0);
+		nMMC_PWM2_OUT			: out  std_logic_vector (47 downto 0);
+
+		-- ====================
+		-- ADC (AD7357)
+		-- ====================
+		nADC_GR0_CS_OUT			: inout  std_logic;
+		ADC_GR0_SCLK_OUT		: inout  std_logic;
+		ADC_GR0_DATA_IN			: in  std_logic_vector (3 downto 0);
+
+		nADC_GR1_CS_OUT			: inout  std_logic;
+		ADC_GR1_SCLK_OUT		: inout  std_logic;
+		ADC_GR1_DATA_IN			: in  std_logic_vector (3 downto 0);
+
+		nADC_GR2_CS_OUT			: inout  std_logic;
+		ADC_GR2_SCLK_OUT		: inout  std_logic;
+		ADC_GR2_DATA_IN			: in  std_logic_vector (3 downto 0);
+
+		nADC_GR3_CS_OUT			: inout  std_logic;
+		ADC_GR3_SCLK_OUT		: inout  std_logic;
+		ADC_GR3_DATA_IN			: in  std_logic_vector (3 downto 0);
+
+		nADC_GR4_CS_OUT			: inout  std_logic;
+		ADC_GR4_SCLK_OUT		: inout  std_logic;
+		ADC_GR4_DATA_IN			: in  std_logic_vector (3 downto 0);
+
+		nADC_GR5_CS_OUT			: inout  std_logic;
+		ADC_GR5_SCLK_OUT		: inout  std_logic;
+		ADC_GR5_DATA_IN			: in  std_logic_vector (3 downto 0);
+
+		nADC_GR6_CS_OUT			: inout  std_logic;
+		ADC_GR6_SCLK_OUT		: inout  std_logic;
+		ADC_GR6_DATA_IN			: in  std_logic_vector (3 downto 0);
+
+		nADC_GR7_CS_OUT			: inout  std_logic;
+		ADC_GR7_SCLK_OUT		: inout  std_logic;
+		ADC_GR7_DATA_IN			: in  std_logic_vector (3 downto 0);
+
+		nADC_GR8_CS_OUT			: inout  std_logic;
+		ADC_GR8_SCLK_OUT		: inout  std_logic;
+		ADC_GR8_DATA_IN			: in  std_logic_vector (3 downto 0);
+
+		nADC_GR9_CS_OUT			: inout  std_logic;
+		ADC_GR9_SCLK_OUT		: inout  std_logic;
+		ADC_GR9_DATA_IN			: in  std_logic_vector (3 downto 0);
+
+		CPU_FPGA_RES			: out  std_logic_vector(9 downto 0);
+		FPGA_RES				: out  std_logic_vector(9 downto 0)
+		
+	 
+	);
+	
+
+end top;
+
+architecture Behavioral of top is
+
+	signal SPR			: std_logic_vector(15 downto 0)		:= "00000000" & "00000000";
+	signal SPR_ST1		: std_logic_vector(15 downto 0)		:= "00000000" & "00000000";
+	signal SPR_ST2		: std_logic_vector(15 downto 0)		:= "00000000" & "00000000";
+	signal DUMMY		: std_logic_vector(4 downto 0)		:= "00000";
+
+	signal RESET			: std_logic							:= '0';
+	signal RESET_B			: std_logic							:= '0';
+	signal RESET_BB			: std_logic							:= '0';
+
+	signal CLK100			: std_logic							:= '0';
+	signal CLK100FX			: std_logic							:= '0';
+	signal CLK0				: std_logic							:= '0';
+	signal CLKFB			: std_logic							:= '0';
+	signal CLK20B			: std_logic							:= '0';
+	signal LOCKED_100		: std_logic							:= '0';
+	signal LOCK_STATUS_100	: std_logic_vector(7 downto 0)		:= "00000000";
+	signal RESET_DCM_100	: std_logic							:= '0';
+	signal DCM_OK_100		: std_logic							:= '0';
+	signal LOCK_CNT_100		: std_logic_vector(18 downto 0)		:= "000" & "00000000" & "00000001";
+
+	signal CLK150			: std_logic							:= '0';
+	signal CLK150FX			: std_logic							:= '0';
+	signal CLK0_2			: std_logic							:= '0';
+	signal CLKFB_2			: std_logic							:= '0';
+	signal LOCKED_150		: std_logic							:= '0';
+	signal LOCK_STATUS_150	: std_logic_vector(7 downto 0)		:= "00000000";
+	signal RESET_DCM_150	: std_logic							:= '0';
+	signal DCM_OK_150		: std_logic							:= '0';
+	signal LOCK_CNT_150		: std_logic_vector(18 downto 0)		:= "000" & "00000000" & "00000001";
+
+
+	signal BUS_CS2_B		: std_logic							:= '0';
+	signal BUS_CS2_BB		: std_logic							:= '0';
+	signal BUS_CS3_B		: std_logic							:= '0';
+	signal BUS_CS3_BB		: std_logic							:= '0';
+	signal BUS_RD_B			: std_logic							:= '0';
+	signal BUS_RD_BB		: std_logic							:= '0';
+	signal BUS_WR_B			: std_logic							:= '0';
+	signal BUS_WR_BB		: std_logic							:= '0';
+	signal BUS_RnW_B		: std_logic							:= '0';
+	signal BUS_RnW_BB		: std_logic							:= '0';
+	signal BUS_A_B			: std_logic_vector(16 downto 0)		:= "000000000" & "00000000";
+	signal BUS_A_BB			: std_logic_vector(16 downto 0)		:= "000000000" & "00000000";
+	signal BUS_DW_B			: std_logic_vector(15 downto 0)		:= "00000000" & "00000000";
+	signal BUS_DW_BB		: std_logic_vector(15 downto 0)		:= "00000000" & "00000000";
+	signal BUS_CNT			: integer range 0 to 20				:= 0;
+
+	signal BUS_RD_0			: std_logic							:= '0';
+--	signal BUS_WR_0			: std_logic							:= '0';
+	signal BUS_RD_1			: std_logic							:= '0';
+	signal BUS_WR_1			: std_logic							:= '0';
+	signal BUS_RD_2			: std_logic							:= '0';
+	signal BUS_WR_2			: std_logic							:= '0';
+	signal BUS_RD_3			: std_logic							:= '0';
+	signal BUS_WR_3			: std_logic							:= '0';
+	signal BUS_RD_FF		: std_logic							:= '0';
+	signal BUS_WR_FF		: std_logic							:= '0';
+	signal BUS_DR_0			: std_logic_vector(15 downto 0)		:= "00000000" & "00000000";
+	signal BUS_DR_1			: std_logic_vector(15 downto 0)		:= "00000000" & "00000000";
+	signal BUS_DR_1_2		: std_logic_vector(15 downto 0)		:= "00000000" & "00000000";
+	signal BUS_DR_1_3		: std_logic_vector(15 downto 0)		:= "00000000" & "00000000";
+	signal BUS_DR_2			: std_logic_vector(15 downto 0)		:= "00000000" & "00000000";
+	signal BUS_DR_2_2		: std_logic_vector(15 downto 0)		:= "00000000" & "00000000";
+	signal BUS_DR_3			: std_logic_vector(15 downto 0)		:= "00000000" & "00000000";
+	signal BUS_DR_FF		: std_logic_vector(15 downto 0)		:= "00000000" & "00000000";
+
+	signal DI_LPF			: std_logic_vector(15 downto 0)		:= "00000000" & "00000000";
+	signal DSW_LPF			: std_logic_vector(3 downto 0)		:= "0000";
+	signal DSW_BOOT_LPF		: std_logic_vector(1 downto 0)		:= "00";
+	signal DO_LPF			: std_logic_vector(15 downto 0)		:= "00000000" & "00000000";
+--	signal LED				: std_logic_vector(3 downto 0)		:= "0000";
+
+	signal ADC_ERR				: std_logic							:= '0';
+	signal WDT_ERR				: std_logic							:= '0';
+	signal GB					: std_logic							:= '0';
+
+	signal AD_CS				: std_logic							:= '0';
+	signal AD_CLK				: std_logic							:= '0';
+
+	signal ADC_GR0_CS_B				: std_logic							:= '0';
+	signal ADC_GR1_CS_B				: std_logic							:= '0';
+	signal ADC_GR2_CS_B				: std_logic							:= '0';
+	signal ADC_GR3_CS_B				: std_logic							:= '0';
+	signal ADC_GR4_CS_B				: std_logic							:= '0';
+	signal ADC_GR5_CS_B				: std_logic							:= '0';
+	signal ADC_GR6_CS_B				: std_logic							:= '0';
+	signal ADC_GR7_CS_B				: std_logic							:= '0';
+	signal ADC_GR8_CS_B				: std_logic							:= '0';
+	signal ADC_GR9_CS_B				: std_logic							:= '0';
+
+	signal ADC_GR0_SCLK_B			: std_logic							:= '0';
+	signal ADC_GR1_SCLK_B			: std_logic							:= '0';
+	signal ADC_GR2_SCLK_B			: std_logic							:= '0';
+	signal ADC_GR3_SCLK_B			: std_logic							:= '0';
+	signal ADC_GR4_SCLK_B			: std_logic							:= '0';
+	signal ADC_GR5_SCLK_B			: std_logic							:= '0';
+	signal ADC_GR6_SCLK_B			: std_logic							:= '0';
+	signal ADC_GR7_SCLK_B			: std_logic							:= '0';
+	signal ADC_GR8_SCLK_B			: std_logic							:= '0';
+	signal ADC_GR9_SCLK_B			: std_logic							:= '0';
+
+	signal ADC_GR0_DATA_B			: std_logic_vector(3 downto 0)		:= "0000";
+	signal ADC_GR1_DATA_B			: std_logic_vector(3 downto 0)		:= "0000";
+	signal ADC_GR2_DATA_B			: std_logic_vector(3 downto 0)		:= "0000";
+	signal ADC_GR3_DATA_B			: std_logic_vector(3 downto 0)		:= "0000";
+	signal ADC_GR4_DATA_B			: std_logic_vector(3 downto 0)		:= "0000";
+	signal ADC_GR5_DATA_B			: std_logic_vector(3 downto 0)		:= "0000";
+	signal ADC_GR6_DATA_B			: std_logic_vector(3 downto 0)		:= "0000";
+	signal ADC_GR7_DATA_B			: std_logic_vector(3 downto 0)		:= "0000";
+	signal ADC_GR8_DATA_B			: std_logic_vector(3 downto 0)		:= "0000";
+	signal ADC_GR9_DATA_B			: std_logic_vector(3 downto 0)		:= "0000";
+
+	signal AD_CH_EN					: std_logic_vector(9 downto 0)		:= "1111111111";
+
+	signal nINT_SIG					: std_logic							:= '1';
+	signal PWM_ON					: std_logic							:= '0';
+	signal WDT_ON					: std_logic							:= '0';
+	
+	---------------
+	signal nMMC_PWM1_buf: std_logic_vector(47 downto 0)		:= X"000000000000";
+	signal nMMC_PWM2_buf: std_logic_vector(47 downto 0)		:= X"000000000000";
+	------------------
+	
+	------20220303W
+	signal nMMC_PWM1_FPGA_buf_buf_buf		: std_logic_vector(47 downto 0)	:= "10011111" & "11111111" & "11111111" & "11111111" & "11111111" & "00001111";
+	signal nMMC_PWM2_FPGA_buf_buf_buf		: std_logic_vector(47 downto 0)	:= "10011111" & "11111111" & "11111111" & "11111111" & "11111111" & "00001111";
+	
+	-----------------------------
+
+	attribute IOB: string;
+	attribute IOB of BUS_A_B : signal is "FORCE";
+	attribute IOB of BUS_CS2_B : signal is "FORCE";
+	attribute IOB of BUS_RnW_B : signal is "FORCE";
+	attribute IOB of BUS_DW_B : signal is "FORCE";
+	attribute IOB of ADC_GR0_DATA_B : signal is "FORCE";
+	attribute IOB of ADC_GR1_DATA_B : signal is "FORCE";
+	attribute IOB of ADC_GR2_DATA_B : signal is "FORCE";
+	attribute IOB of ADC_GR3_DATA_B : signal is "FORCE";
+	attribute IOB of ADC_GR4_DATA_B : signal is "FORCE";
+	attribute IOB of ADC_GR5_DATA_B : signal is "FORCE";
+	attribute IOB of ADC_GR6_DATA_B : signal is "FORCE";
+	attribute IOB of ADC_GR7_DATA_B : signal is "FORCE";
+	attribute IOB of ADC_GR8_DATA_B : signal is "FORCE";
+	attribute IOB of ADC_GR9_DATA_B : signal is "FORCE";
+	attribute IOB of ADC_GR0_CS_B : signal is "FORCE";
+	attribute IOB of ADC_GR1_CS_B : signal is "FORCE";
+	attribute IOB of ADC_GR2_CS_B : signal is "FORCE";
+	attribute IOB of ADC_GR3_CS_B : signal is "FORCE";
+	attribute IOB of ADC_GR4_CS_B : signal is "FORCE";
+	attribute IOB of ADC_GR5_CS_B : signal is "FORCE";
+	attribute IOB of ADC_GR6_CS_B : signal is "FORCE";
+	attribute IOB of ADC_GR7_CS_B : signal is "FORCE";
+	attribute IOB of ADC_GR8_CS_B : signal is "FORCE";
+	attribute IOB of ADC_GR9_CS_B : signal is "FORCE";
+	attribute IOB of ADC_GR0_SCLK_B : signal is "FORCE";
+	attribute IOB of ADC_GR1_SCLK_B : signal is "FORCE";
+	attribute IOB of ADC_GR2_SCLK_B : signal is "FORCE";
+	attribute IOB of ADC_GR3_SCLK_B : signal is "FORCE";
+	attribute IOB of ADC_GR4_SCLK_B : signal is "FORCE";
+	attribute IOB of ADC_GR5_SCLK_B : signal is "FORCE";
+	attribute IOB of ADC_GR6_SCLK_B : signal is "FORCE";
+	attribute IOB of ADC_GR7_SCLK_B : signal is "FORCE";
+	attribute IOB of ADC_GR8_SCLK_B : signal is "FORCE";
+	attribute IOB of ADC_GR9_SCLK_B : signal is "FORCE";
+
+		--ver2--
+	signal Vc_UP1_B		: std_logic_vector(13 downto 0);		--RfTdVc
+	signal Vc_UP2_B		: std_logic_vector(13 downto 0);
+	signal Vc_UP3_B		: std_logic_vector(13 downto 0);
+	signal Vc_UP4_B		: std_logic_vector(13 downto 0);
+	signal Vc_UN1_B		: std_logic_vector(13 downto 0);
+	signal Vc_UN2_B		: std_logic_vector(13 downto 0);
+	signal Vc_UN3_B		: std_logic_vector(13 downto 0);
+	signal Vc_UN4_B		: std_logic_vector(13 downto 0);
+	signal Vc_VP1_B		: std_logic_vector(13 downto 0);
+	signal Vc_VP2_B		: std_logic_vector(13 downto 0);
+	signal Vc_VP3_B		: std_logic_vector(13 downto 0);
+	signal Vc_VP4_B		: std_logic_vector(13 downto 0);
+	signal Vc_VN1_B		: std_logic_vector(13 downto 0);
+	signal Vc_VN2_B		: std_logic_vector(13 downto 0);
+	signal Vc_VN3_B		: std_logic_vector(13 downto 0);
+	signal Vc_VN4_B		: std_logic_vector(13 downto 0);
+	signal Vc_WP1_B		: std_logic_vector(13 downto 0);
+	signal Vc_WP2_B		: std_logic_vector(13 downto 0);
+	signal Vc_WP3_B		: std_logic_vector(13 downto 0);
+	signal Vc_WP4_B		: std_logic_vector(13 downto 0);
+	signal Vc_WN1_B		: std_logic_vector(13 downto 0);
+	signal Vc_WN2_B		: std_logic_vector(13 downto 0);
+	signal Vc_WN3_B		: std_logic_vector(13 downto 0);
+	signal Vc_WN4_B		: std_logic_vector(13 downto 0);
+	signal Iz_UP_B			: std_logic_vector(13 downto 0);		--A[dIz
+	signal Iz_UN_B			: std_logic_vector(13 downto 0);
+	signal Iz_VP_B			: std_logic_vector(13 downto 0);
+	signal Iz_VN_B			: std_logic_vector(13 downto 0);
+	signal Iz_WP_B			: std_logic_vector(13 downto 0);
+	signal Iz_WN_B			: std_logic_vector(13 downto 0);
+	signal Vdc_B			: std_logic_vector(13 downto 0);			--ddVdc
+	signal Vuv_mmc_B		: std_logic_vector(13 downto 0);		--MMCodVo_mmc
+	signal Vwu_mmc_B		: std_logic_vector(13 downto 0);
+	signal Vvw_mmc_B		: std_logic_vector(13 downto 0);
+	signal Vwu_inv_B		: std_logic_vector(13 downto 0);		--Co[^odVo_inv
+	signal Vvw_inv_B		: std_logic_vector(13 downto 0);
+	signal Vuv_inv_B		: std_logic_vector(13 downto 0);
+	signal IU_inv_B		: std_logic_vector(13 downto 0);		--Co[^odIo_inv
+	signal IV_inv_B		: std_logic_vector(13 downto 0);
+	signal IW_inv_B		: std_logic_vector(13 downto 0);
+	signal MRate_UP1_B	: std_logic_vector(15 downto 0);		--UT
+	signal MRate_UP2_B	: std_logic_vector(15 downto 0);
+	signal MRate_UP3_B	: std_logic_vector(15 downto 0);
+	signal MRate_UP4_B	: std_logic_vector(15 downto 0);
+	signal MRate_UN1_B	: std_logic_vector(15 downto 0);
+	signal MRate_UN2_B	: std_logic_vector(15 downto 0);
+	signal MRate_UN3_B	: std_logic_vector(15 downto 0);
+	signal MRate_UN4_B	: std_logic_vector(15 downto 0);
+	signal MRate_VP1_B	: std_logic_vector(15 downto 0);		--VT
+	signal MRate_VP2_B	: std_logic_vector(15 downto 0);
+	signal MRate_VP3_B	: std_logic_vector(15 downto 0);
+	signal MRate_VP4_B	: std_logic_vector(15 downto 0);
+	signal MRate_VN1_B	: std_logic_vector(15 downto 0);
+	signal MRate_VN2_B	: std_logic_vector(15 downto 0);
+	signal MRate_VN3_B	: std_logic_vector(15 downto 0);
+	signal MRate_VN4_B	: std_logic_vector(15 downto 0);
+	signal MRate_WP1_B	: std_logic_vector(15 downto 0);		--WT
+	signal MRate_WP2_B	: std_logic_vector(15 downto 0);
+	signal MRate_WP3_B	: std_logic_vector(15 downto 0);
+	signal MRate_WP4_B	: std_logic_vector(15 downto 0);
+	signal MRate_WN1_B	: std_logic_vector(15 downto 0);
+	signal MRate_WN2_B	: std_logic_vector(15 downto 0);
+	signal MRate_WN3_B	: std_logic_vector(15 downto 0);
+	signal MRate_WN4_B	: std_logic_vector(15 downto 0);
+		-------
+--ver2.3---		
+	signal nMMC_PWM1_FPGA_B	: std_logic_vector(47 downto 0)	:= "11111111" & "11111111" & "11111111" & "11111111" & "11111111" & "11111111";
+	signal nMMC_PWM2_FPGA_B	: std_logic_vector(47 downto 0)	:= "11111111" & "11111111" & "11111111" & "11111111" & "11111111" & "11111111";
+	signal nINT_SIG_FPGA_B		:	std_logic := '1';
+	
+	signal PWM_ON_FPGA_B		:	std_logic := '0';
+	signal GB_FPGA_B			: std_logic;
+	-----
+	
+	--ver2.6.4--
+	signal REF_UP1_vector_B	: std_logic_vector(15 downto 0);
+	signal REF_UP2_vector_B	: std_logic_vector(15 downto 0);
+	signal REF_UP3_vector_B	: std_logic_vector(15 downto 0);
+	signal REF_UP4_vector_B	: std_logic_vector(15 downto 0);
+	signal REF_UN1_vector_B	: std_logic_vector(15 downto 0);
+	signal REF_UN2_vector_B	: std_logic_vector(15 downto 0);
+	signal REF_UN3_vector_B	: std_logic_vector(15 downto 0);
+	signal REF_UN4_vector_B	: std_logic_vector(15 downto 0);
+	signal REF_VP1_vector_B	: std_logic_vector(15 downto 0);
+	signal REF_VP2_vector_B	: std_logic_vector(15 downto 0);
+	signal REF_VP3_vector_B	: std_logic_vector(15 downto 0);
+	signal REF_VP4_vector_B	: std_logic_vector(15 downto 0);
+	signal REF_VN1_vector_B	: std_logic_vector(15 downto 0);
+	signal REF_VN2_vector_B	: std_logic_vector(15 downto 0);
+	signal REF_VN3_vector_B	: std_logic_vector(15 downto 0);
+	signal REF_VN4_vector_B	: std_logic_vector(15 downto 0);
+	---------------
+	
+	--ver3.4.2--chipscopefobOp---------------------
+	signal vau_B        : std_logic_vector(15 downto 0);
+	signal vav_B        : std_logic_vector(15 downto 0);
+	signal vb_up1_B     : std_logic_vector(15 downto 0);
+	signal vb_up2_B     : std_logic_vector(15 downto 0);
+	signal vb_up3_B     : std_logic_vector(15 downto 0);
+	signal vb_up4_B     : std_logic_vector(15 downto 0);
+	signal vb_un1_B     : std_logic_vector(15 downto 0);
+	signal vb_un2_B     : std_logic_vector(15 downto 0);
+	signal vb_un3_B     : std_logic_vector(15 downto 0);
+	signal vb_un4_B     : std_logic_vector(15 downto 0);
+	signal vb_vp1_B     : std_logic_vector(15 downto 0);
+	signal vb_vp2_B     : std_logic_vector(15 downto 0);
+	signal vb_vp3_B     : std_logic_vector(15 downto 0);
+	signal vb_vp4_B     : std_logic_vector(15 downto 0);
+	signal vb_vn1_B     : std_logic_vector(15 downto 0);
+	signal vb_vn2_B     : std_logic_vector(15 downto 0);
+	signal vb_vn3_B     : std_logic_vector(15 downto 0);
+	signal vb_vn4_B     : std_logic_vector(15 downto 0);
+	-------------------------------------------------
+	
+	--ver3.7--lp
+	signal GATE_EN_B    : std_logic;
+	----------
+	--ver3.7.1--
+	signal VA_no_limit_U_B : std_logic_vector(15 downto 0);
+	signal VA_no_limit_V_B : std_logic_vector(15 downto 0);
+	---------------------------------
+	
+	--ver3.7.5--
+	signal Voref_B	: std_logic_vector(15 downto 0);
+	------------
+	
+	--ver3.8.5(debug)--
+	signal Iz_UP_N_debug_out_B : std_logic_vector(15 downto 0);
+	signal Iz_UP_N_out_B 	   : std_logic_vector(15 downto 0);
+	-------------------
+	
+--QMDB_ver1.1--------------------------------------------------------------------------------------
+	signal	dVoref_out_B        : std_logic_vector(15 downto 0);
+	signal	IC_N_out_B	        : std_logic_vector(15 DOWNTO 0);
+	signal	Vo_N_out_B	        : std_logic_vector(15 DOWNTO 0);
+	signal	QMDB_OUTPUT_out_B   : std_logic_vector(15 DOWNTO 0);
+	signal	Vdc_N_out_B		     : std_logic_vector(15 DOWNTO 0);
+	signal   soft_cnt_out_B		  : std_logic_vector(15 DOWNTO 0);
+	signal   clk10k_BB			  : std_logic;
+	signal   cnt80k_debug_B		  : std_logic_vector(15 downto 0);
+---------------------------------------------------------------------------------------------------
+
+--ILA_signals----------------------------------------------------------------------------------------------
+	signal	Vuv_ILA					: std_logic_vector(19 downto 0);
+	signal	Vvw_ILA					: std_logic_vector(19 DOWNTO 0);
+	signal	Ioutu_ILA				: std_logic_vector(19 DOWNTO 0);
+	signal	Ioutv_ILA				: std_logic_vector(19 DOWNTO 0);
+	signal	ILu_ILA					: std_logic_vector(19 DOWNTO 0);
+	signal   ILv_ILA					: std_logic_vector(19 DOWNTO 0);
+	signal   Vrefa_ILA				: std_logic_vector(19 DOWNTO 0);
+	signal   Vrefb_ILA				: std_logic_vector(19 downto 0);
+	signal	deltaTa_ILA				: std_logic_vector(15 downto 0);
+	signal	deltaTb_ILA				: std_logic_vector(15 DOWNTO 0);
+	signal	deltaTa_hold_ILA		: std_logic_vector(15 DOWNTO 0);
+	signal	deltaTb_hold_ILA		: std_logic_vector(15 DOWNTO 0);
+	signal	switche_contol_ILA	: std_logic_vector(13 DOWNTO 0);
+---------------------------------------------------------------------------------------------------
+
+	signal	CONTROL0	: std_logic_vector(35 DOWNTO 0);
+
+--count_1MHz------------------------------------------------------
+	signal	cnt_1MHz					: std_logic;
+------------------------------------------------------------------
+--count_50kHz------------------------------------------------------
+	signal	cnt_50kHz					: std_logic;
+------------------------------------------------------------------
+
+---count_1MHz_module----------------------
+	component count_1M is
+		Port (
+			clk	: in std_logic; --100MHz base clock
+			cnt_1M	: out std_logic --1MHz count
+		);
+	end component;
+------------------------------------------
+---count_50kHz_module----------------------
+	component count_50k is
+		Port (
+			clk	: in std_logic; --1MHz base clock
+			cnt_50k	: out std_logic --50kHz count
+		);
+	end component;
+------------------------------------------
+
+---icon_module-----------------------------
+	component icon_srdcdb is
+		Port (
+			CONTROL0	: inout std_logic_vector(35 DOWNTO 0)
+		);
+	end component;
+-------------------------------------------
+
+---ila_module------------------------------
+	component ila_srdcdb is
+		Port (
+			CONTROL	: inout std_logic_vector(35 DOWNTO 0);
+			CLK		: in std_logic;
+			TRIG0		: in std_logic_vector(19 DOWNTO 0);
+			TRIG1		: in std_logic_vector(19 DOWNTO 0);
+			TRIG2		: in std_logic_vector(19 DOWNTO 0);
+			TRIG3		: in std_logic_vector(19 DOWNTO 0);
+			TRIG4		: in std_logic_vector(19 DOWNTO 0);
+			TRIG5		: in std_logic_vector(19 DOWNTO 0);
+			TRIG6		: in std_logic_vector(19 DOWNTO 0);
+			TRIG7		: in std_logic_vector(19 DOWNTO 0);
+			TRIG8		: in std_logic_vector(15 DOWNTO 0);
+			TRIG9		: in std_logic_vector(15 DOWNTO 0);
+			TRIG10	: in std_logic_vector(15 DOWNTO 0);
+			TRIG11	: in std_logic_vector(15 DOWNTO 0);
+			TRIG12	: in std_logic_vector(13 DOWNTO 0)
+			);
+	end component;
+--------------------------------------------
+
+
+
+	component BBB_LPF is
+		generic (
+			LPF_TIME	: natural;
+			INVERT		: natural
+		);
+		Port (
+			LPF_IN	: in std_logic;
+			CLK		: in std_logic;
+			LPF_OUT	: out std_logic
+		);
+	end component;
+
+
+	component AD7357 is
+		Port (
+			CLK150		: in	std_logic;
+			CLK100		: in	std_logic;
+			RESET		: in	std_logic;
+			A			: in	std_logic_vector(7 downto 0);
+			DW			: in	std_logic_vector(15 downto 0);
+			DR			: out	std_logic_vector(15 downto 0);
+			DR2			: out	std_logic_vector(15 downto 0);
+			RD			: in	std_logic;
+			WR			: in	std_logic;
+			
+			AD_CS		: out	std_logic;
+			AD_CLK		: out	std_logic;
+			AD_CH_EN	: out	std_logic_vector(9 downto 0);
+			
+			ADC_GR0_CS		: in	std_logic;
+			ADC_GR0_SCLK	: in	std_logic;
+			ADC_GR0_DATA	: in	std_logic_vector(3 downto 0);
+
+			ADC_GR1_CS		: in	std_logic;
+			ADC_GR1_SCLK	: in	std_logic;
+			ADC_GR1_DATA	: in	std_logic_vector(3 downto 0);
+
+			ADC_GR2_CS		: in	std_logic;
+			ADC_GR2_SCLK	: in	std_logic;
+			ADC_GR2_DATA	: in	std_logic_vector(3 downto 0);
+
+			ADC_GR3_CS		: in	std_logic;
+			ADC_GR3_SCLK	: in	std_logic;
+			ADC_GR3_DATA	: in	std_logic_vector(3 downto 0);
+
+			ADC_GR4_CS		: in	std_logic;
+			ADC_GR4_SCLK	: in	std_logic;
+			ADC_GR4_DATA	: in	std_logic_vector(3 downto 0);
+
+			ADC_GR5_CS		: in	std_logic;
+			ADC_GR5_SCLK	: in	std_logic;
+			ADC_GR5_DATA	: in	std_logic_vector(3 downto 0);
+
+			ADC_GR6_CS		: in	std_logic;
+			ADC_GR6_SCLK	: in	std_logic;
+			ADC_GR6_DATA	: in	std_logic_vector(3 downto 0);
+
+			ADC_GR7_CS		: in	std_logic;
+			ADC_GR7_SCLK	: in	std_logic;
+			ADC_GR7_DATA	: in	std_logic_vector(3 downto 0);
+
+			ADC_GR8_CS		: in	std_logic;
+			ADC_GR8_SCLK	: in	std_logic;
+			ADC_GR8_DATA	: in	std_logic_vector(3 downto 0);
+
+			ADC_GR9_CS		: in	std_logic;
+			ADC_GR9_SCLK	: in	std_logic;
+			ADC_GR9_DATA	: in	std_logic_vector(3 downto 0);
+			
+			ADC_ERR			: out	std_logic;
+			
+			--ver2--
+			Vc_UP1		: out	std_logic_vector(13 downto 0);		--RfTdVc
+			Vc_UP2		: out	std_logic_vector(13 downto 0);
+			Vc_UP3		: out	std_logic_vector(13 downto 0);
+			Vc_UP4		: out	std_logic_vector(13 downto 0);
+			Vc_UN1		: out	std_logic_vector(13 downto 0);
+			Vc_UN2		: out	std_logic_vector(13 downto 0);
+			Vc_UN3		: out	std_logic_vector(13 downto 0);
+			Vc_UN4		: out	std_logic_vector(13 downto 0);
+			Vc_VP1		: out	std_logic_vector(13 downto 0);
+			Vc_VP2		: out	std_logic_vector(13 downto 0);
+			Vc_VP3		: out	std_logic_vector(13 downto 0);
+			Vc_VP4		: out	std_logic_vector(13 downto 0);
+			Vc_VN1		: out	std_logic_vector(13 downto 0);
+			Vc_VN2		: out	std_logic_vector(13 downto 0);
+			Vc_VN3		: out	std_logic_vector(13 downto 0);
+			Vc_VN4		: out	std_logic_vector(13 downto 0);
+			Vc_WP1		: out	std_logic_vector(13 downto 0);
+			Vc_WP2		: out	std_logic_vector(13 downto 0);
+			Vc_WP3		: out	std_logic_vector(13 downto 0);
+			Vc_WP4		: out	std_logic_vector(13 downto 0);
+			Vc_WN1		: out	std_logic_vector(13 downto 0);
+			Vc_WN2		: out	std_logic_vector(13 downto 0);
+			Vc_WN3		: out	std_logic_vector(13 downto 0);
+			Vc_WN4		: out	std_logic_vector(13 downto 0);
+			Iz_UP			: out	std_logic_vector(13 downto 0);		--A[dIz
+			Iz_UN			: out	std_logic_vector(13 downto 0);
+			Iz_VP			: out	std_logic_vector(13 downto 0);
+			Iz_VN			: out	std_logic_vector(13 downto 0);
+			Iz_WP			: out	std_logic_vector(13 downto 0);
+			Iz_WN			: out	std_logic_vector(13 downto 0);
+			Vdc			: out	std_logic_vector(13 downto 0);		--ddVdc
+			Vuv_mmc		: out	std_logic_vector(13 downto 0);		--MMCodVo_mmc
+			Vwu_mmc		: out	std_logic_vector(13 downto 0);
+			Vvw_mmc		: out	std_logic_vector(13 downto 0);
+			Vwu_inv		: out	std_logic_vector(13 downto 0);		--Co[^odVo_inv
+			Vvw_inv		: out	std_logic_vector(13 downto 0);
+			Vuv_inv		: out	std_logic_vector(13 downto 0);
+			IU_inv		: out	std_logic_vector(13 downto 0);		--Co[^odIo_inv
+			IV_inv		: out	std_logic_vector(13 downto 0);
+			IW_inv		: out	std_logic_vector(13 downto 0)		
+			-------			
+			);
+	end component;
+
+
+	component MMC_PWM is
+		Port (
+			CLK100		: in	std_logic;
+			RESET		: in	std_logic;
+			A			: in	std_logic_vector(7 downto 0);
+			DW			: in	std_logic_vector(15 downto 0);
+			DR			: out	std_logic_vector(15 downto 0);
+			DR2			: out	std_logic_vector(15 downto 0);
+			DR3			: out	std_logic_vector(15 downto 0);
+			RD			: in	std_logic;
+			WR			: in	std_logic;
+			
+			nMMC_PWM1	: out	std_logic_vector(47 downto 0);
+			nMMC_PWM2	: out	std_logic_vector(47 downto 0);
+			nINT_SIG	: out	std_logic;
+			
+			PWM_ON		: out	std_logic;
+			GB			: in	std_logic;
+			
+			--20190814_PFPGA_PIfobOp--
+			MRate_UP1	: in	std_logic_vector(15 downto 0);		--UT
+			MRate_UP2	: in	std_logic_vector(15 downto 0);
+			MRate_UP3	: in	std_logic_vector(15 downto 0);
+			MRate_UP4	: in	std_logic_vector(15 downto 0);
+			MRate_UN1	: in	std_logic_vector(15 downto 0);
+			MRate_UN2	: in	std_logic_vector(15 downto 0);
+			MRate_UN3	: in	std_logic_vector(15 downto 0);
+			MRate_UN4	: in	std_logic_vector(15 downto 0);
+			MRate_VP1	: in	std_logic_vector(15 downto 0);		--VT
+			MRate_VP2	: in	std_logic_vector(15 downto 0);
+			MRate_VP3	: in	std_logic_vector(15 downto 0);
+			MRate_VP4	: in	std_logic_vector(15 downto 0);
+			MRate_VN1	: in	std_logic_vector(15 downto 0);
+			MRate_VN2	: in	std_logic_vector(15 downto 0);
+			MRate_VN3	: in	std_logic_vector(15 downto 0);
+			MRate_VN4	: in	std_logic_vector(15 downto 0);
+			MRate_WP1	: in	std_logic_vector(15 downto 0);		--WT
+			MRate_WP2	: in	std_logic_vector(15 downto 0);
+			MRate_WP3	: in	std_logic_vector(15 downto 0);
+			MRate_WP4	: in	std_logic_vector(15 downto 0);
+			MRate_WN1	: in	std_logic_vector(15 downto 0);
+			MRate_WN2	: in	std_logic_vector(15 downto 0);
+			MRate_WN3	: in	std_logic_vector(15 downto 0);
+			MRate_WN4	: in	std_logic_vector(15 downto 0);
+			-----------------------------------
+			
+			--ver2.6.4--
+			REF_UP1_vector	: out std_logic_vector(15 downto 0);
+			REF_UP2_vector	: out std_logic_vector(15 downto 0);
+			REF_UP3_vector	: out std_logic_vector(15 downto 0);
+			REF_UP4_vector	: out std_logic_vector(15 downto 0);
+			REF_UN1_vector	: out std_logic_vector(15 downto 0);
+			REF_UN2_vector	: out std_logic_vector(15 downto 0);
+			REF_UN3_vector	: out std_logic_vector(15 downto 0);
+			REF_UN4_vector	: out std_logic_vector(15 downto 0);
+			REF_VP1_vector	: out std_logic_vector(15 downto 0);
+			REF_VP2_vector	: out std_logic_vector(15 downto 0);
+			REF_VP3_vector	: out std_logic_vector(15 downto 0);
+			REF_VP4_vector	: out std_logic_vector(15 downto 0);
+			REF_VN1_vector	: out std_logic_vector(15 downto 0);
+			REF_VN2_vector	: out std_logic_vector(15 downto 0);
+			REF_VN3_vector	: out std_logic_vector(15 downto 0);
+			REF_VN4_vector	: out std_logic_vector(15 downto 0)
+			----------------
+		
+			);
+	end component;
+
+
+	component MMC_WDT is
+		Port (
+			CLK100		: in	std_logic;
+			RESET		: in	std_logic;
+			A			: in	std_logic_vector(7 downto 0);
+			DW			: in	std_logic_vector(15 downto 0);
+			DR			: out	std_logic_vector(15 downto 0);
+			RD			: in	std_logic;
+			WR			: in	std_logic;
+			
+			WDT_ON		: out	std_logic;
+			ERROR		: out	std_logic
+			);
+	end component;
+
+
+--	--ver2--
+--	component control_top is
+--		Port (
+--			CLK100		: in	std_logic;									--100MNbN
+--			Vc_UP1		: in	std_logic_vector(13 downto 0);		--RfTdVc
+--			Vc_UP2		: in	std_logic_vector(13 downto 0);
+--			Vc_UP3		: in	std_logic_vector(13 downto 0);
+--			Vc_UP4		: in	std_logic_vector(13 downto 0);
+--			Vc_UN1		: in	std_logic_vector(13 downto 0);
+--			Vc_UN2		: in	std_logic_vector(13 downto 0);
+--			Vc_UN3		: in	std_logic_vector(13 downto 0);
+--			Vc_UN4		: in	std_logic_vector(13 downto 0);
+--			Vc_VP1		: in	std_logic_vector(13 downto 0);
+--			Vc_VP2		: in	std_logic_vector(13 downto 0);
+--			Vc_VP3		: in	std_logic_vector(13 downto 0);
+--			Vc_VP4		: in	std_logic_vector(13 downto 0);
+--			Vc_VN1		: in	std_logic_vector(13 downto 0);
+--			Vc_VN2		: in	std_logic_vector(13 downto 0);
+--			Vc_VN3		: in	std_logic_vector(13 downto 0);
+--			Vc_VN4		: in	std_logic_vector(13 downto 0);
+--			Vc_WP1		: in	std_logic_vector(13 downto 0);
+--			Vc_WP2		: in	std_logic_vector(13 downto 0);
+--			Vc_WP3		: in	std_logic_vector(13 downto 0);
+--			Vc_WP4		: in	std_logic_vector(13 downto 0);
+--			Vc_WN1		: in	std_logic_vector(13 downto 0);
+--			Vc_WN2		: in	std_logic_vector(13 downto 0);
+--			Vc_WN3		: in	std_logic_vector(13 downto 0);
+--			Vc_WN4		: in	std_logic_vector(13 downto 0);
+--			Iz_UP			: in	std_logic_vector(13 downto 0);		--A[dIz
+--			Iz_UN			: in	std_logic_vector(13 downto 0);
+--			Iz_VP			: in	std_logic_vector(13 downto 0);
+--			Iz_VN			: in	std_logic_vector(13 downto 0);
+--			Iz_WP			: in	std_logic_vector(13 downto 0);
+--			Iz_WN			: in	std_logic_vector(13 downto 0);
+--			Vdc			: in	std_logic_vector(13 downto 0);			--ddVdc
+--			Vuv_mmc		: in	std_logic_vector(13 downto 0);		--MMCodVo_mmc
+--			Vwu_mmc		: in	std_logic_vector(13 downto 0);
+--			Vvw_mmc		: in	std_logic_vector(13 downto 0);
+--			Vwu_inv		: in	std_logic_vector(13 downto 0);		--Co[^odVo_inv
+--			Vvw_inv		: in	std_logic_vector(13 downto 0);
+--			Vuv_inv		: in	std_logic_vector(13 downto 0);
+--			IU_inv		: in	std_logic_vector(13 downto 0);		--Co[^odIo_inv
+--			IV_inv		: in	std_logic_vector(13 downto 0);
+--			IW_inv		: in	std_logic_vector(13 downto 0);
+--			MRate_UP1	: out	std_logic_vector(15 downto 0);		--UT
+--			MRate_UP2	: out	std_logic_vector(15 downto 0);
+--			MRate_UP3	: out	std_logic_vector(15 downto 0);
+--			MRate_UP4	: out	std_logic_vector(15 downto 0);
+--			MRate_UN1	: out	std_logic_vector(15 downto 0);
+--			MRate_UN2	: out	std_logic_vector(15 downto 0);
+--			MRate_UN3	: out	std_logic_vector(15 downto 0);
+--			MRate_UN4	: out	std_logic_vector(15 downto 0);
+--			MRate_VP1	: out	std_logic_vector(15 downto 0);		--VT
+--			MRate_VP2	: out	std_logic_vector(15 downto 0);
+--			MRate_VP3	: out	std_logic_vector(15 downto 0);
+--			MRate_VP4	: out	std_logic_vector(15 downto 0);
+--			MRate_VN1	: out	std_logic_vector(15 downto 0);
+--			MRate_VN2	: out	std_logic_vector(15 downto 0);
+--			MRate_VN3	: out	std_logic_vector(15 downto 0);
+--			MRate_VN4	: out	std_logic_vector(15 downto 0);
+--			MRate_WP1	: out	std_logic_vector(15 downto 0);		--WT
+--			MRate_WP2	: out	std_logic_vector(15 downto 0);
+--			MRate_WP3	: out	std_logic_vector(15 downto 0);
+--			MRate_WP4	: out	std_logic_vector(15 downto 0);
+--			MRate_WN1	: out	std_logic_vector(15 downto 0);
+--			MRate_WN2	: out	std_logic_vector(15 downto 0);
+--			MRate_WN3	: out	std_logic_vector(15 downto 0);
+--			MRate_WN4	: out	std_logic_vector(15 downto 0);
+--			--ver3.4.2--chipscopefobOp---------------------
+--			VAu_out 		: out std_logic_vector(15 downto 0);
+--			VAv_out 		: out std_logic_vector(15 downto 0);
+--			vb_up1_out  : out std_logic_vector(15 downto 0);
+--			vb_up2_out  : out std_logic_vector(15 downto 0);
+--			vb_up3_out  : out std_logic_vector(15 downto 0);
+--			vb_up4_out  : out std_logic_vector(15 downto 0);
+--			vb_un1_out  : out std_logic_vector(15 downto 0);
+--			vb_un2_out  : out std_logic_vector(15 downto 0);
+--			vb_un3_out  : out std_logic_vector(15 downto 0);
+--			vb_un4_out  : out std_logic_vector(15 downto 0);
+--			vb_vp1_out  : out std_logic_vector(15 downto 0);
+--			vb_vp2_out  : out std_logic_vector(15 downto 0);
+--			vb_vp3_out  : out std_logic_vector(15 downto 0);
+--			vb_vp4_out  : out std_logic_vector(15 downto 0);
+--			vb_vn1_out  : out std_logic_vector(15 downto 0);
+--			vb_vn2_out  : out std_logic_vector(15 downto 0);
+--			vb_vn3_out  : out std_logic_vector(15 downto 0);
+--			vb_vn4_out  : out std_logic_vector(15 downto 0);
+--			-------------------------------------------------
+--			
+--			--ver3.7--lp
+--			GATE_EN : in std_logic;
+--			----------
+--			--ver3.7.1--
+--			VA_no_limit_U : out std_logic_vector(15 downto 0);
+--			VA_no_limit_V : out std_logic_vector(15 downto 0);
+--			----------
+--			--ver3.7.5--
+--			Voref_out	: out std_logic_vector(15 downto 0);
+--			------------
+--			--ver3.8.5(debug)--
+--			Iz_UP_N_debug_out : out std_logic_vector(15 downto 0);
+--			Iz_UP_N_out 		: out std_logic_vector(15 downto 0);
+--			-------------------
+----QMDB_ver1.1--------------------------------------------------------------------------------------
+--		   dVoref_out       : OUT     std_logic_vector(15 downto 0);
+--		   IC_N_out	        : OUT   	std_logic_vector(15 DOWNTO 0);
+--	 	   Vo_N_out	        : OUT 	   std_logic_vector(15 DOWNTO 0);
+--	 	   QMDB_OUTPUT_out  : OUT     std_logic_vector(15 DOWNTO 0);
+--	 	   Vdc_N_out		  : OUT     std_logic_vector(15 DOWNTO 0);
+--		  soft_cnt_out		: OUT		 std_logic_vector(15 DOWNTO 0);
+--		  clk10k_B_out			: OUT 	 std_logic;
+--		  	cnt80k_debug		: OUT		 std_logic_vector(15 DOWNTO 0)
+-----------------------------------------------------------------------------------------------------
+--			);
+--	end component;
+--	-----------
+	
+		--ver2.3--
+	component MMC_PWM_FPGA is
+		Port (
+			CLK100		: in	std_logic;
+			RESET		: in	std_logic;
+			A			: in	std_logic_vector(7 downto 0);
+			DW			: in	std_logic_vector(15 downto 0);
+	--		DR			: out	std_logic_vector(15 downto 0)	:= "00000000" & "00000000";
+	--		DR2		: out	std_logic_vector(15 downto 0)	:= "00000000" & "00000000";
+	--		DR3		: out	std_logic_vector(15 downto 0)	:= "00000000" & "00000000";
+			RD			: in	std_logic;
+			WR			: in	std_logic;
+			
+			GB			: in  std_logic;
+			
+			MRate_UP1 : in std_logic_vector(15 downto 0);
+			MRate_UP2 : in std_logic_vector(15 downto 0);
+			MRate_UP3 : in std_logic_vector(15 downto 0);
+			MRate_UP4 : in std_logic_vector(15 downto 0);
+			MRate_UN1 : in std_logic_vector(15 downto 0);
+			MRate_UN2 : in std_logic_vector(15 downto 0);
+			MRate_UN3 : in std_logic_vector(15 downto 0);
+			MRate_UN4 : in std_logic_vector(15 downto 0);
+			MRate_VP1 : in std_logic_vector(15 downto 0);
+			MRate_VP2 : in std_logic_vector(15 downto 0);
+			MRate_VP3 : in std_logic_vector(15 downto 0);
+			MRate_VP4 : in std_logic_vector(15 downto 0);
+			MRate_VN1 : in std_logic_vector(15 downto 0);
+			MRate_VN2 : in std_logic_vector(15 downto 0);
+			MRate_VN3 : in std_logic_vector(15 downto 0);
+			MRate_VN4 : in std_logic_vector(15 downto 0);
+			
+			--ver2.6.4--
+			REF_UP1_vector	: in std_logic_vector(15 downto 0);
+			REF_UP2_vector	: in std_logic_vector(15 downto 0);
+			REF_UP3_vector	: in std_logic_vector(15 downto 0);
+			REF_UP4_vector	: in std_logic_vector(15 downto 0);
+			REF_UN1_vector	: in std_logic_vector(15 downto 0);
+			REF_UN2_vector	: in std_logic_vector(15 downto 0);
+			REF_UN3_vector	: in std_logic_vector(15 downto 0);
+			REF_UN4_vector	: in std_logic_vector(15 downto 0);
+			REF_VP1_vector	: in std_logic_vector(15 downto 0);
+			REF_VP2_vector	: in std_logic_vector(15 downto 0);
+			REF_VP3_vector	: in std_logic_vector(15 downto 0);
+			REF_VP4_vector	: in std_logic_vector(15 downto 0);
+			REF_VN1_vector	: in std_logic_vector(15 downto 0);
+			REF_VN2_vector	: in std_logic_vector(15 downto 0);
+			REF_VN3_vector	: in std_logic_vector(15 downto 0);
+			REF_VN4_vector	: in std_logic_vector(15 downto 0);
+			----------------
+			
+			--ver3.4.2--chipscopefobOp---------------------
+			VAu 	  : in std_logic_vector(15 downto 0);
+			VAv 	  : in std_logic_vector(15 downto 0);
+			vb_up1  : in std_logic_vector(15 downto 0);
+			vb_up2  : in std_logic_vector(15 downto 0);
+			vb_up3  : in std_logic_vector(15 downto 0);
+			vb_up4  : in std_logic_vector(15 downto 0);
+			vb_un1  : in std_logic_vector(15 downto 0);
+			vb_un2  : in std_logic_vector(15 downto 0);
+			vb_un3  : in std_logic_vector(15 downto 0);
+			vb_un4  : in std_logic_vector(15 downto 0);
+			vb_vp1  : in std_logic_vector(15 downto 0);
+			vb_vp2  : in std_logic_vector(15 downto 0);
+			vb_vp3  : in std_logic_vector(15 downto 0);
+			vb_vp4  : in std_logic_vector(15 downto 0);
+			vb_vn1  : in std_logic_vector(15 downto 0);
+			vb_vn2  : in std_logic_vector(15 downto 0);
+			vb_vn3  : in std_logic_vector(15 downto 0);
+			vb_vn4  : in std_logic_vector(15 downto 0);
+			-------------------------------------------------
+			
+			nMMC_PWM1_FPGA	: out	std_logic_vector(47 downto 0)	:= "11111111" & "11111111" & "11111111" & "11111111" & "11111111" & "11111111";
+			nMMC_PWM2_FPGA	: out	std_logic_vector(47 downto 0)	:= "11111111" & "11111111" & "11111111" & "11111111" & "11111111" & "11111111";
+			nINT_SIG_FPGA	: out	std_logic := '1';
+			
+			PWM_ON_FPGA		: out	std_logic := '0';
+			GB_FPGA			: in	std_logic;
+			
+			--ver3.7--lp
+			GATE_EN_out : out std_logic;
+			----------
+			--ver3.7.1--
+			VA_no_limit_U : in std_logic_vector(15 downto 0);
+			VA_no_limit_V : in std_logic_vector(15 downto 0);
+			----------
+			--ver3.7.5--
+			Voref_BB	: in std_logic_vector(15 downto 0);
+			------------
+			--ver3.8.5(debug)--
+			Iz_UP_N_debug_out_BB : in std_logic_vector(15 downto 0);
+			Iz_UP_N_out_BB 		: in std_logic_vector(15 downto 0);
+			-------------------
+--QMDB_ver1.1--------------------------------------------------------------------------------------
+		   dVoref_out_BB        : IN     std_logic_vector(15 downto 0);
+		   IC_N_out_BB	        : IN   	std_logic_vector(15 DOWNTO 0);
+	 	   Vo_N_out_BB	        : IN 	   std_logic_vector(15 DOWNTO 0);
+	 	   QMDB_OUTPUT_out_BB   : IN     std_logic_vector(15 DOWNTO 0);
+	 	   Vdc_N_out_BB		    : IN     std_logic_vector(15 DOWNTO 0);
+			soft_cnt_out_BB	      : IN     std_logic_vector(15 DOWNTO 0);
+			clk10k_BBB           : IN     std_logic;
+			cnt80k_debug_BB			: IN 		std_logic_vector(15 DOWNTO 0)
+---------------------------------------------------------------------------------------------------
+
+			);
+	end component;
+		-----------
+		
+		
+			--20220303
+		component Control_top2 is
+  PORT( clk                               :   IN    std_logic;
+        reset                             :   IN    std_logic;
+        clk_enable                        :   IN    std_logic;
+        V_uv                              :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        V_uw                              :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        iout_u                            :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        iout_v                            :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        iL_u                              :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        iL_v                              :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        switch_control                    :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        Up_current                        :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        Un_current                        :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        Vp_current                        :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        Vn_current                        :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        Wp_current                        :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        UW_current                        :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_U1                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_U2                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_U3                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_U4                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_U5                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_U6                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_U7                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_U8                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_V1                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_V2                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_V3                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_V4                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_V5                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_V6                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_V7                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_V8                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_W1                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_W2                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_W3                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_W4                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_W5                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_W6                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_W7                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        CV_W8                             :   IN    std_logic_vector(13 DOWNTO 0);  -- ufix14
+        ce_out                            :   OUT   std_logic;
+        MMC_PWM_OUT1                      :   OUT   std_logic_vector(47 DOWNTO 0);  -- ufix48
+        MMC_PWM_OUT2                      :   OUT   std_logic_vector(47 DOWNTO 0);  -- ufix48
+		  
+        Vuv                               :   OUT   std_logic_vector(19 DOWNTO 0);  -- ufix14
+        Vvw                               :   OUT   std_logic_vector(19 DOWNTO 0);  -- ufix14
+        Ioutu                             :   OUT   std_logic_vector(19 DOWNTO 0);  -- ufix14
+        Ioutv                             :   OUT   std_logic_vector(19 DOWNTO 0);  -- ufix14
+        ILu                               :   OUT   std_logic_vector(19 DOWNTO 0);  -- ufix14
+        ILv                               :   OUT   std_logic_vector(19 DOWNTO 0);  -- ufix14
+        Vrefa                             :   OUT   std_logic_vector(19 DOWNTO 0);  -- sfix14
+        Vrefb                             :   OUT   std_logic_vector(19 DOWNTO 0);  -- sfix14
+        deltaTa                           :   OUT   std_logic_vector(15 DOWNTO 0);  -- int16
+        deltaTb                           :   OUT   std_logic_vector(15 DOWNTO 0);  -- int16
+        deltaTa_hold                      :   OUT   std_logic_vector(15 DOWNTO 0);  -- int16
+        deltaTb_hold                      :   OUT   std_logic_vector(15 DOWNTO 0);  -- int16
+        switch_control1                   :   OUT   std_logic_vector(13 DOWNTO 0)  -- ufix14
+        );
+		end component;
+
+
+begin
+
+-- ====================================================
+-- Generate Internal Clock (100MHz)
+--   20MHzNbN5{{CLK100
+--   {WbNBUS_CLK_INgp
+-- ====================================================
+
+	INBUF_CLK:IBUFG
+		port map(
+			O	=> CLK20B,
+			I	=> CLK20_IN
+			);
+
+-- DCM_SP: Digital Clock Manager
+-- Spartan-6
+-- Xilinx HDL Libraries Guide, version 14.3
+	DCM_SP_inst : DCM_SP
+		generic map (
+			CLKDV_DIVIDE 			=> 2.0, 					-- CLKDV divide value
+																-- (1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,9,10,11,12,13,14,15,16).
+			CLKFX_DIVIDE 			=> 1, 						-- Divide value on CLKFX outputs - D - (1-32)
+			CLKFX_MULTIPLY 			=> 5, 						-- Multiply value on CLKFX outputs - M - (2-32)
+			CLKIN_DIVIDE_BY_2 		=> FALSE, 					-- CLKIN divide by two (TRUE/FALSE)
+			CLKIN_PERIOD 			=> 50.0, 					-- Input clock period specified in nS
+			CLKOUT_PHASE_SHIFT 		=> "NONE", 					-- Output phase shift (NONE, FIXED, VARIABLE)
+			CLK_FEEDBACK 			=> "1X", 					-- Feedback source (NONE, 1X, 2X)
+			DESKEW_ADJUST 			=> "SYSTEM_SYNCHRONOUS", 	-- SYSTEM_SYNCHRNOUS or SOURCE_SYNCHRONOUS
+			PHASE_SHIFT 			=> 0, 						-- Amount of fixed phase shift (-255 to 255)
+			STARTUP_WAIT 			=> FALSE 					-- Delay config DONE until DCM_SP LOCKED (TRUE/FALSE)
+		)
+		port map (
+			CLK0 		=> CLK0, 						-- 1-bit output: 0 degree clock output
+			CLK180 		=> open, 						-- 1-bit output: 180 degree clock output
+			CLK270 		=> open, 						-- 1-bit output: 270 degree clock output
+			CLK2X 		=> open, 						-- 1-bit output: 2X clock frequency clock output
+			CLK2X180 	=> open, 						-- 1-bit output: 2X clock frequency, 180 degree clock output
+			CLK90 		=> open, 						-- 1-bit output: 90 degree clock output
+			CLKDV 		=> open, 						-- 1-bit output: Divided clock output
+			CLKFX 		=> CLK100FX, 					-- 1-bit output: Digital Frequency Synthesizer output (DFS)
+			CLKFX180 	=> open, 						-- 1-bit output: 180 degree CLKFX output
+			LOCKED 		=> LOCKED_100, 					-- 1-bit output: DCM_SP Lock Output
+			PSDONE 		=> open, 						-- 1-bit output: Phase shift done output
+			STATUS 		=> LOCK_STATUS_100, 			-- 8-bit output: DCM_SP status output
+			CLKFB 		=> CLKFB, 						-- 1-bit input: Clock feedback input
+			CLKIN 		=> CLK20B, 						-- 1-bit input: Clock input
+			DSSEN 		=> '0', 						-- 1-bit input: Unsupported, specify to GND.
+			PSCLK 		=> '0', 						-- 1-bit input: Phase shift clock input
+			PSEN 		=> '0', 						-- 1-bit input: Phase shift enable
+			PSINCDEC 	=> '0', 						-- 1-bit input: Phase shift increment/decrement input
+			RST 		=> RESET_DCM_100 				-- 1-bit input: Active high reset input
+		);
+-- End of DCM_SP_inst instantiation
+
+	CLKF_BUF: BUFG
+		port map(
+			O => CLKFB,
+			I => CLK0
+			);
+
+	CLK100OUT_BUF: BUFG
+	port map(
+			O	=> CLK100,
+			I	=> CLK100FX
+			);
+
+
+
+	DCM_SP_inst2 : DCM_SP
+		generic map (
+			CLKDV_DIVIDE 			=> 2.0, 					-- CLKDV divide value
+																-- (1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,9,10,11,12,13,14,15,16).
+			CLKFX_DIVIDE 			=> 2, 						-- Divide value on CLKFX outputs - D - (1-32)
+			CLKFX_MULTIPLY 			=> 3, 						-- Multiply value on CLKFX outputs - M - (2-32)
+			CLKIN_DIVIDE_BY_2 		=> FALSE, 					-- CLKIN divide by two (TRUE/FALSE)
+			CLKIN_PERIOD 			=> 10.0, 					-- Input clock period specified in nS
+			CLKOUT_PHASE_SHIFT 		=> "NONE", 					-- Output phase shift (NONE, FIXED, VARIABLE)
+			CLK_FEEDBACK 			=> "1X", 					-- Feedback source (NONE, 1X, 2X)
+			DESKEW_ADJUST 			=> "SYSTEM_SYNCHRONOUS", 	-- SYSTEM_SYNCHRNOUS or SOURCE_SYNCHRONOUS
+			PHASE_SHIFT 			=> 0, 						-- Amount of fixed phase shift (-255 to 255)
+			STARTUP_WAIT 			=> FALSE 					-- Delay config DONE until DCM_SP LOCKED (TRUE/FALSE)
+		)
+		port map (
+			CLK0 		=> CLK0_2, 						-- 1-bit output: 0 degree clock output
+			CLK180 		=> open, 						-- 1-bit output: 180 degree clock output
+			CLK270 		=> open, 						-- 1-bit output: 270 degree clock output
+			CLK2X 		=> open, 						-- 1-bit output: 2X clock frequency clock output
+			CLK2X180 	=> open, 						-- 1-bit output: 2X clock frequency, 180 degree clock output
+			CLK90 		=> open, 						-- 1-bit output: 90 degree clock output
+			CLKDV 		=> open, 						-- 1-bit output: Divided clock output
+			CLKFX 		=> CLK150FX, 					-- 1-bit output: Digital Frequency Synthesizer output (DFS)
+			CLKFX180 	=> open, 						-- 1-bit output: 180 degree CLKFX output
+			LOCKED 		=> LOCKED_150, 					-- 1-bit output: DCM_SP Lock Output
+			PSDONE 		=> open, 						-- 1-bit output: Phase shift done output
+			STATUS 		=> LOCK_STATUS_150, 			-- 8-bit output: DCM_SP status output
+			CLKFB 		=> CLKFB_2,						-- 1-bit input: Clock feedback input
+			CLKIN 		=> CLK100, 						-- 1-bit input: Clock input
+			DSSEN 		=> '0', 						-- 1-bit input: Unsupported, specify to GND.
+			PSCLK 		=> '0', 						-- 1-bit input: Phase shift clock input
+			PSEN 		=> '0', 						-- 1-bit input: Phase shift enable
+			PSINCDEC 	=> '0', 						-- 1-bit input: Phase shift increment/decrement input
+			RST 		=> RESET_DCM_150 				-- 1-bit input: Active high reset input
+		);
+-- End of DCM_SP_inst instantiation
+
+	CLKF_BUF_2: BUFG
+		port map(
+			O => CLKFB_2,
+			I => CLK0_2
+			);
+
+	CLK150OUT_BUF: BUFG
+	port map(
+			O	=> CLK150,
+			I	=> CLK150FX
+			);
+
+
+
+	process(CLK20B)
+	begin
+		if CLK20B'event and CLK20B = '1' then
+			if LOCKED_100 = '1' and LOCK_STATUS_100(1) = '0' and LOCK_STATUS_100(2) = '0' and LOCK_STATUS_100(7) = '0' then
+				LOCK_CNT_100	<= "000" & "00000000" & "00000000";
+				RESET_DCM_100	<= '0';
+				DCM_OK_100		<= '1';
+			else
+				DCM_OK_100		<= '0';
+				LOCK_CNT_100	<= LOCK_CNT_100 + 1;
+				if LOCK_CNT_100 =  "000" & "00000000" & "00000001" then
+					RESET_DCM_100	<= '1';
+				else
+					RESET_DCM_100	<= '0';
+				end if;
+			end if;
+		end if;
+	end process;
+
+	process(CLK20B)
+	begin
+		if CLK20B'event and CLK20B = '1' then
+			if LOCKED_150 = '1' and LOCK_STATUS_150(1) = '0' and LOCK_STATUS_150(2) = '0' and LOCK_STATUS_150(7) = '0' then
+				LOCK_CNT_150	<= "000" & "00000000" & "00000000";
+				RESET_DCM_150	<= '0';
+				DCM_OK_150		<= '1';
+			else
+				DCM_OK_150		<= '0';
+				LOCK_CNT_150	<= LOCK_CNT_150 + 1;
+				if LOCK_CNT_150 =  "000" & "00000000" & "00000001" then
+					RESET_DCM_150	<= '1';
+				else
+					RESET_DCM_150	<= '0';
+				end if;
+			end if;
+		end if;
+	end process;
+
+-- ====================================================
+-- Generate Internal RESET
+--   RESET    : ZbgM
+--   RESET_BB : ZbgM(CLK100)
+-- ====================================================
+
+	RESET	<= '0' when nRESET_IN = '1' and DCM_OK_100 = '1' and RESET_DCM_100 = '0' and DCM_OK_150 = '1' and RESET_DCM_150 = '0' else '1';
+	
+	process(CLK100)
+	begin
+		if CLK100'event and CLK100 = '1' then
+			RESET_B		<= RESET;
+			RESET_BB	<= RESET_B;
+		end if;
+	end process;
+
+
+-- ====================================================
+-- Input Filter
+--   tB^
+--   tB^Kv
+-- ====================================================
+	LPF_DI0: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DI_IN(0),		CLK => CLK100,		LPF_OUT => DI_LPF(0) ) ;
+	LPF_DI1: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DI_IN(1),		CLK => CLK100,		LPF_OUT => DI_LPF(1) ) ;
+	LPF_DI2: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DI_IN(2),		CLK => CLK100,		LPF_OUT => DI_LPF(2) ) ;
+	LPF_DI3: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DI_IN(3),		CLK => CLK100,		LPF_OUT => DI_LPF(3) ) ;
+	LPF_DI4: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DI_IN(4),		CLK => CLK100,		LPF_OUT => DI_LPF(4) ) ;
+	LPF_DI5: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DI_IN(5),		CLK => CLK100,		LPF_OUT => DI_LPF(5) ) ;
+	LPF_DI6: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DI_IN(6),		CLK => CLK100,		LPF_OUT => DI_LPF(6) ) ;
+	LPF_DI7: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DI_IN(7),		CLK => CLK100,		LPF_OUT => DI_LPF(7) ) ;
+	LPF_DI8: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DI_IN(8),		CLK => CLK100,		LPF_OUT => DI_LPF(8) ) ;
+	LPF_DI9: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DI_IN(9),		CLK => CLK100,		LPF_OUT => DI_LPF(9) ) ;
+	LPF_DI10: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DI_IN(10),		CLK => CLK100,		LPF_OUT => DI_LPF(10) ) ;
+	LPF_DI11: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DI_IN(11),		CLK => CLK100,		LPF_OUT => DI_LPF(11) ) ;
+	LPF_DI12: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DI_IN(12),		CLK => CLK100,		LPF_OUT => DI_LPF(12) ) ;
+	LPF_DI13: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DI_IN(13),		CLK => CLK100,		LPF_OUT => DI_LPF(13) ) ;
+	LPF_DI14: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DI_IN(14),		CLK => CLK100,		LPF_OUT => DI_LPF(14) ) ;
+	LPF_DI15: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DI_IN(15),		CLK => CLK100,		LPF_OUT => DI_LPF(15) ) ;
+
+	LPF_DSW0: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DSW_IN(0),		CLK => CLK100,		LPF_OUT => DSW_LPF(0) ) ;
+	LPF_DSW1: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DSW_IN(1),		CLK => CLK100,		LPF_OUT => DSW_LPF(1) ) ;
+	LPF_DSW2: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DSW_IN(2),		CLK => CLK100,		LPF_OUT => DSW_LPF(2) ) ;
+	LPF_DSW3: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DSW_IN(3),		CLK => CLK100,		LPF_OUT => DSW_LPF(3) ) ;
+	LPF_DSW4: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DSW_BOOT_IN(0),		CLK => CLK100,		LPF_OUT => DSW_BOOT_LPF(0) ) ;
+	LPF_DSW5: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DSW_BOOT_IN(1),		CLK => CLK100,		LPF_OUT => DSW_BOOT_LPF(1) ) ;
+
+	LPF_DO0: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DO_IN(0),		CLK => CLK100,		LPF_OUT => DO_LPF(0) ) ;
+	LPF_DO1: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DO_IN(1),		CLK => CLK100,		LPF_OUT => DO_LPF(1) ) ;
+	LPF_DO2: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DO_IN(2),		CLK => CLK100,		LPF_OUT => DO_LPF(2) ) ;
+	LPF_DO3: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DO_IN(3),		CLK => CLK100,		LPF_OUT => DO_LPF(3) ) ;
+	LPF_DO4: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DO_IN(4),		CLK => CLK100,		LPF_OUT => DO_LPF(4) ) ;
+	LPF_DO5: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DO_IN(5),		CLK => CLK100,		LPF_OUT => DO_LPF(5) ) ;
+	LPF_DO6: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DO_IN(6),		CLK => CLK100,		LPF_OUT => DO_LPF(6) ) ;
+	LPF_DO7: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DO_IN(7),		CLK => CLK100,		LPF_OUT => DO_LPF(7) ) ;
+	LPF_DO8: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DO_IN(8),		CLK => CLK100,		LPF_OUT => DO_LPF(8) ) ;
+	LPF_DO9: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DO_IN(9),		CLK => CLK100,		LPF_OUT => DO_LPF(9) ) ;
+	LPF_DO10: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DO_IN(10),		CLK => CLK100,		LPF_OUT => DO_LPF(10) ) ;
+	LPF_DO11: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DO_IN(11),		CLK => CLK100,		LPF_OUT => DO_LPF(11) ) ;
+	LPF_DO12: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DO_IN(12),		CLK => CLK100,		LPF_OUT => DO_LPF(12) ) ;
+	LPF_DO13: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DO_IN(13),		CLK => CLK100,		LPF_OUT => DO_LPF(13) ) ;
+	LPF_DO14: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DO_IN(14),		CLK => CLK100,		LPF_OUT => DO_LPF(14) ) ;
+	LPF_DO15: BBB_LPF	generic map ( LPF_TIME => 5,	INVERT => 0 )	port map ( LPF_IN => DO_IN(15),		CLK => CLK100,		LPF_OUT => DO_LPF(15) ) ;
+
+
+
+-- ====================================================
+-- BUS
+--   oXRnWMgp
+--   /RD, /WRsgp
+-- ====================================================
+
+	process(CLK100)
+	begin
+		if CLK100'event and CLK100 = '1' then
+			BUS_CS2_B		<=	not nBUS_CS2_IN;
+			BUS_CS2_BB		<=	BUS_CS2_B;
+			BUS_CS3_B		<=	not nBUS_CS3_IN;
+			BUS_CS3_BB		<=	BUS_CS3_B;
+			BUS_RD_B		<=	not nBUS_RD_IN;
+			BUS_RD_BB		<=	BUS_RD_B;
+			BUS_WR_B		<=	not nBUS_WR_IN;
+			BUS_WR_BB		<=	BUS_WR_B;
+			BUS_RnW_B		<=	BUS_RnW_IN;
+			BUS_RnW_BB		<=	BUS_RnW_B;
+			BUS_A_B			<=	BUS_A_IN & BUS_BA1_IN;
+			BUS_A_BB		<=	BUS_A_B;
+			BUS_DW_B		<=	BUS_D_IO;
+			BUS_DW_BB		<=	BUS_DW_B;
+
+			if RESET_BB = '1' then
+				BUS_CNT	<= 0;
+			elsif BUS_CS2_BB /= '1' then
+				BUS_CNT	<= 0;
+			elsif BUS_CNT = 20 then
+				BUS_CNT	<= 20;
+			else
+				BUS_CNT	<= BUS_CNT +1;
+			end if;
+		end if;
+	end process;
+	
+	
+	BUS_RD_0		<= '1' when BUS_CS2_BB = '1' and BUS_RnW_BB = '1' and BUS_CNT = 1 and BUS_A_BB(15 downto 8) = x"00" else '0';
+--	BUS_WR_0		<= '1' when BUS_CS2_BB = '1' and BUS_RnW_BB = '0' and BUS_CNT = 3 and BUS_A_BB(15 downto 8) = x"00" else '0';
+	BUS_RD_1		<= '1' when BUS_CS2_BB = '1' and BUS_RnW_BB = '1' and BUS_CNT = 1 and BUS_A_BB(15 downto 8) = x"01" else '0';
+	BUS_WR_1		<= '1' when BUS_CS2_BB = '1' and BUS_RnW_BB = '0' and BUS_CNT = 3 and BUS_A_BB(15 downto 8) = x"01" else '0';
+	BUS_RD_2		<= '1' when BUS_CS2_BB = '1' and BUS_RnW_BB = '1' and BUS_CNT = 1 and BUS_A_BB(15 downto 8) = x"02" else '0';
+	BUS_WR_2		<= '1' when BUS_CS2_BB = '1' and BUS_RnW_BB = '0' and BUS_CNT = 3 and BUS_A_BB(15 downto 8) = x"02" else '0';
+	BUS_RD_3		<= '1' when BUS_CS2_BB = '1' and BUS_RnW_BB = '1' and BUS_CNT = 1 and BUS_A_BB(15 downto 8) = x"03" else '0';
+	BUS_WR_3		<= '1' when BUS_CS2_BB = '1' and BUS_RnW_BB = '0' and BUS_CNT = 3 and BUS_A_BB(15 downto 8) = x"03" else '0';
+	BUS_RD_FF		<= '1' when BUS_CS2_BB = '1' and BUS_RnW_BB = '1' and BUS_CNT = 1 and BUS_A_BB(15 downto 8) = x"FF" else '0';
+	BUS_WR_FF		<= '1' when BUS_CS2_BB = '1' and BUS_RnW_BB = '0' and BUS_CNT = 3 and BUS_A_BB(15 downto 8) = x"FF" else '0';
+	
+	BUS_D_IO	<=			BUS_DR_0	when nBUS_CS2_IN = '0' and BUS_RnW_IN = '1' and BUS_A_BB(15 downto 8) = x"00"
+					else	BUS_DR_1	when nBUS_CS2_IN = '0' and BUS_RnW_IN = '1' and BUS_A_BB(15 downto 8) = x"01" and BUS_A_BB(7 downto 5) = "000"
+					else	BUS_DR_1_2	when nBUS_CS2_IN = '0' and BUS_RnW_IN = '1' and BUS_A_BB(15 downto 8) = x"01" and BUS_A_BB(7 downto 5) = "001"
+					else	BUS_DR_1_3	when nBUS_CS2_IN = '0' and BUS_RnW_IN = '1' and BUS_A_BB(15 downto 8) = x"01"
+					else	BUS_DR_2	when nBUS_CS2_IN = '0' and BUS_RnW_IN = '1' and BUS_A_BB(15 downto 8) = x"02" and BUS_A_BB(7 downto 6) = "00"
+					else	BUS_DR_2_2	when nBUS_CS2_IN = '0' and BUS_RnW_IN = '1' and BUS_A_BB(15 downto 8) = x"02"
+					else	BUS_DR_3	when nBUS_CS2_IN = '0' and BUS_RnW_IN = '1' and BUS_A_BB(15 downto 8) = x"03"
+					else	BUS_DR_FF	when nBUS_CS2_IN = '0' and BUS_RnW_IN = '1' and BUS_A_BB(15 downto 8) = x"FF"
+					else	"ZZZZZZZZ" & "ZZZZZZZZ";
+
+
+	process(CLK100)
+	begin
+		if CLK100'event and CLK100 = '1' then
+			if BUS_RD_0 = '1' then
+				case BUS_A_BB(7 downto 0) is
+					when x"00"	=> BUS_DR_0	<=	DI_LPF;
+					when x"01"	=> BUS_DR_0	<=	DO_LPF(15 downto 0);
+					when x"02"	=> BUS_DR_0	<=	"00000000" & "0000" & DSW_LPF(3 downto 0);
+					when x"03"	=> BUS_DR_0	<=	"00000000" & "000000" & DSW_BOOT_LPF(1 downto 0);
+--					when x"04"	=> BUS_DR_0	<=	"00000000" & "0000" & LED;
+
+					when x"FF"	=> BUS_DR_0	<=	CONV_std_logic_vector (FPGA_VERSION_MAJOR, 4) 
+													& CONV_std_logic_vector (FPGA_VERSION_MINOR, 4) 
+													& CONV_std_logic_vector (FPGA_VERSION_BUILD, 8);
+					when others => BUS_DR_0	<=	"00000000" & "00000000";
+				end case;
+			end if;
+
+--			if RESET_BB = '1' then
+--				LED		<= "0000";
+--			elsif BUS_WR_0 = '1' then
+--				case BUS_A_BB(7 downto 0) is
+--					when x"04"	=> LED		<= BUS_DW_BB(3 downto 0);
+--					when others	=> null;
+--				end case;
+--			else
+--				null;
+--			end if;
+		end if;
+	end process;
+
+
+
+	process(CLK100)
+	begin
+		if CLK100'event and CLK100 = '1' then
+			if BUS_RD_FF = '1' then
+				case BUS_A_BB(7 downto 0) is
+					when x"FE"	=> BUS_DR_FF	<=	"00000000"&"000" & DUMMY;
+					when x"FF"	=> BUS_DR_FF	<=	SPR;
+					when others => BUS_DR_FF	<=	"00000000" & "00000000";
+				end case;
+			end if;
+
+			if RESET_BB = '1' then
+				SPR		<= "00000000" & "00000000";
+			elsif BUS_WR_FF = '1' then
+				case BUS_A_BB(7 downto 0) is
+					when x"FF"	=> SPR		<= BUS_DW_BB;
+					when others	=> null;
+				end case;
+			else
+				null;
+			end if;
+		end if;
+	end process;
+
+
+
+-- ====================================================
+-- MMC_PWM
+-- ====================================================
+
+	MMC_PWM_GEN :MMC_PWM
+		port map(
+			CLK100		=> CLK100,
+			RESET		=> RESET_BB,
+			A			=> BUS_A_BB(7 downto 0),
+			DW			=> BUS_DW_BB,
+			DR			=> BUS_DR_1,
+			DR2			=> BUS_DR_1_2,
+			DR3			=> BUS_DR_1_3,
+			RD			=> BUS_RD_1,
+			WR			=> BUS_WR_1,
+			
+--			nMMC_PWM1	=> nMMC_PWM1_OUT,
+--			nMMC_PWM2	=> nMMC_PWM2_OUT,
+			--(20190716)
+			nMMC_PWM1	=> nMMC_PWM1_buf,
+			nMMC_PWM2	=> nMMC_PWM2_buf,
+			nINT_SIG	=> nINT_SIG,
+			
+			PWM_ON		=> PWM_ON,
+			GB			=> GB,
+		
+		--20190814_PFPGA_PIfobOp--
+			MRate_UP1	=>	MRate_UP1_B,		--UT
+			MRate_UP2	=>	MRate_UP2_B,
+			MRate_UP3	=>	MRate_UP3_B,
+			MRate_UP4	=>	MRate_UP4_B,
+			MRate_UN1	=>	MRate_UN1_B,
+			MRate_UN2	=>	MRate_UN2_B,
+			MRate_UN3	=>	MRate_UN3_B,
+			MRate_UN4	=>	MRate_UN4_B,
+			MRate_VP1	=>	MRate_VP1_B,		--VT
+			MRate_VP2	=>	MRate_VP2_B,
+			MRate_VP3	=>	MRate_VP3_B,
+			MRate_VP4	=>	MRate_VP4_B,
+			MRate_VN1	=>	MRate_VN1_B,
+			MRate_VN2	=>	MRate_VN2_B,
+			MRate_VN3	=>	MRate_VN3_B,
+			MRate_VN4	=>	MRate_VN4_B,
+			MRate_WP1	=>	MRate_WP1_B,		--WT
+			MRate_WP2	=>	MRate_WP2_B,
+			MRate_WP3	=>	MRate_WP3_B,
+			MRate_WP4	=>	MRate_WP4_B,
+			MRate_WN1	=>	MRate_WN1_B,
+			MRate_WN2	=>	MRate_WN2_B,
+			MRate_WN3	=>	MRate_WN3_B,
+			MRate_WN4	=>	MRate_WN4_B,
+		-----------------------------------
+			--ver2.6.4--
+			REF_UP1_vector => REF_UP1_vector_B,
+			REF_UP2_vector => REF_UP2_vector_B,
+			REF_UP3_vector => REF_UP3_vector_B,
+			REF_UP4_vector	=> REF_UP4_vector_B,
+			REF_UN1_vector => REF_UN1_vector_B,
+			REF_UN2_vector	=> REF_UN2_vector_B,
+			REF_UN3_vector	=> REF_UN3_vector_B,
+			REF_UN4_vector	=> REF_UN4_vector_B,
+			REF_VP1_vector => REF_VP1_vector_B,	
+			REF_VP2_vector	=> REF_VP2_vector_B,
+			REF_VP3_vector	=> REF_VP3_vector_B,
+			REF_VP4_vector	=> REF_VP4_vector_B,
+			REF_VN1_vector	=> REF_VN1_vector_B,
+			REF_VN2_vector	=> REF_VN2_vector_B,
+			REF_VN3_vector	=> REF_VN3_vector_B,
+			REF_VN4_vector	=> REF_VN4_vector_B
+			----------------
+			
+			);
+
+
+-- ====================================================
+-- ADC
+-- ====================================================
+
+	process(CLK150)
+	begin
+		if CLK150'event and CLK150 = '1' then
+			ADC_GR0_CS_B	<= not nADC_GR0_CS_OUT;
+			ADC_GR1_CS_B	<= not nADC_GR1_CS_OUT;
+			ADC_GR2_CS_B	<= not nADC_GR2_CS_OUT;
+			ADC_GR3_CS_B	<= not nADC_GR3_CS_OUT;
+			ADC_GR4_CS_B	<= not nADC_GR4_CS_OUT;
+			ADC_GR5_CS_B	<= not nADC_GR5_CS_OUT;
+			ADC_GR6_CS_B	<= not nADC_GR6_CS_OUT;
+			ADC_GR7_CS_B	<= not nADC_GR7_CS_OUT;
+			ADC_GR8_CS_B	<= not nADC_GR8_CS_OUT;
+			ADC_GR9_CS_B	<= not nADC_GR9_CS_OUT;
+			
+			ADC_GR0_SCLK_B	<= ADC_GR0_SCLK_OUT;
+			ADC_GR1_SCLK_B	<= ADC_GR1_SCLK_OUT;
+			ADC_GR2_SCLK_B	<= ADC_GR2_SCLK_OUT;
+			ADC_GR3_SCLK_B	<= ADC_GR3_SCLK_OUT;
+			ADC_GR4_SCLK_B	<= ADC_GR4_SCLK_OUT;
+			ADC_GR5_SCLK_B	<= ADC_GR5_SCLK_OUT;
+			ADC_GR6_SCLK_B	<= ADC_GR6_SCLK_OUT;
+			ADC_GR7_SCLK_B	<= ADC_GR7_SCLK_OUT;
+			ADC_GR8_SCLK_B	<= ADC_GR8_SCLK_OUT;
+			ADC_GR9_SCLK_B	<= ADC_GR9_SCLK_OUT;
+			
+			ADC_GR0_DATA_B	<= ADC_GR0_DATA_IN;
+			ADC_GR1_DATA_B	<= ADC_GR1_DATA_IN;
+			ADC_GR2_DATA_B	<= ADC_GR2_DATA_IN;
+			ADC_GR3_DATA_B	<= ADC_GR3_DATA_IN;
+			ADC_GR4_DATA_B	<= ADC_GR4_DATA_IN;
+			ADC_GR5_DATA_B	<= ADC_GR5_DATA_IN;
+			ADC_GR6_DATA_B	<= ADC_GR6_DATA_IN;
+			ADC_GR7_DATA_B	<= ADC_GR7_DATA_IN;
+			ADC_GR8_DATA_B	<= ADC_GR8_DATA_IN;
+			ADC_GR9_DATA_B	<= ADC_GR9_DATA_IN;
+		end if;
+	end process;
+
+	ADC :AD7357
+		port map(
+			CLK150		=> CLK150,
+			CLK100		=> CLK100,
+			RESET		=> RESET_BB,
+			A			=> BUS_A_BB(7 downto 0),
+			DW			=> BUS_DW_BB,
+			DR			=> BUS_DR_2,
+			DR2			=> BUS_DR_2_2,
+			RD			=> BUS_RD_2,
+			WR			=> BUS_WR_2,
+			
+			AD_CS		=> AD_CS,
+			AD_CLK		=> AD_CLK,
+			AD_CH_EN	=> AD_CH_EN,
+			
+			ADC_GR0_CS		=> ADC_GR0_CS_B,
+			ADC_GR0_SCLK	=> ADC_GR0_SCLK_B,
+			ADC_GR0_DATA	=> ADC_GR0_DATA_B,
+
+			ADC_GR1_CS		=> ADC_GR1_CS_B,
+			ADC_GR1_SCLK	=> ADC_GR1_SCLK_B,
+			ADC_GR1_DATA	=> ADC_GR1_DATA_B,
+
+			ADC_GR2_CS		=> ADC_GR2_CS_B,
+			ADC_GR2_SCLK	=> ADC_GR2_SCLK_B,
+			ADC_GR2_DATA	=> ADC_GR2_DATA_B,
+
+			ADC_GR3_CS		=> ADC_GR3_CS_B,
+			ADC_GR3_SCLK	=> ADC_GR3_SCLK_B,
+			ADC_GR3_DATA	=> ADC_GR3_DATA_B,
+
+			ADC_GR4_CS		=> ADC_GR4_CS_B,
+			ADC_GR4_SCLK	=> ADC_GR4_SCLK_B,
+			ADC_GR4_DATA	=> ADC_GR4_DATA_B,
+
+			ADC_GR5_CS		=> ADC_GR5_CS_B,
+			ADC_GR5_SCLK	=> ADC_GR5_SCLK_B,
+			ADC_GR5_DATA	=> ADC_GR5_DATA_B,
+
+			ADC_GR6_CS		=> ADC_GR6_CS_B,
+			ADC_GR6_SCLK	=> ADC_GR6_SCLK_B,
+			ADC_GR6_DATA	=> ADC_GR6_DATA_B,
+
+			ADC_GR7_CS		=> ADC_GR7_CS_B,
+			ADC_GR7_SCLK	=> ADC_GR7_SCLK_B,
+			ADC_GR7_DATA	=> ADC_GR7_DATA_B,
+
+			ADC_GR8_CS		=> ADC_GR8_CS_B,
+			ADC_GR8_SCLK	=> ADC_GR8_SCLK_B,
+			ADC_GR8_DATA	=> ADC_GR8_DATA_B,
+
+			ADC_GR9_CS		=> ADC_GR9_CS_B,
+			ADC_GR9_SCLK	=> ADC_GR9_SCLK_B,
+			ADC_GR9_DATA	=> ADC_GR9_DATA_B,
+			
+			ADC_ERR			=> ADC_ERR,
+			
+			--ver2--
+			Vc_UP1			=>	Vc_UP1_B,		--RfTdVc
+			Vc_UP2			=>	Vc_UP2_B,
+			Vc_UP3			=>	Vc_UP3_B,
+			Vc_UP4			=>	Vc_UP4_B,
+			Vc_UN1			=>	Vc_UN1_B,
+			Vc_UN2			=>	Vc_UN2_B,
+			Vc_UN3			=>	Vc_UN3_B,
+			Vc_UN4			=>	Vc_UN4_B,
+			Vc_VP1			=>	Vc_VP1_B,
+			Vc_VP2			=>	Vc_VP2_B,
+			Vc_VP3			=>	Vc_VP3_B,
+			Vc_VP4			=>	Vc_VP4_B,
+			Vc_VN1			=>	Vc_VN1_B,
+			Vc_VN2			=>	Vc_VN2_B,
+			Vc_VN3			=>	Vc_VN3_B,
+			Vc_VN4			=>	Vc_VN4_B,
+			Vc_WP1			=>	Vc_WP1_B,
+			Vc_WP2			=>	Vc_WP2_B,
+			Vc_WP3			=>	Vc_WP3_B,
+			Vc_WP4			=>	Vc_WP4_B,
+			Vc_WN1			=>	Vc_WN1_B,
+			Vc_WN2			=>	Vc_WN2_B,
+			Vc_WN3			=>	Vc_WN3_B,
+			Vc_WN4			=>	Vc_WN4_B,
+			Iz_UP				=>	Iz_UP_B,			--A[dIz
+			Iz_UN				=>	Iz_UN_B,
+			Iz_VP				=>	Iz_VP_B,
+			Iz_VN				=>	Iz_VN_B,
+			Iz_WP				=>	Iz_WP_B,
+			Iz_WN				=>	Iz_WN_B,
+			Vdc				=>	Vdc_B,			--ddVdc
+			Vuv_mmc			=>	Vuv_mmc_B,		--MMCodVo_mmc
+			Vwu_mmc			=>	Vwu_mmc_B,
+			Vvw_mmc			=>	Vvw_mmc_B,
+			Vwu_inv			=>	Vwu_inv_B,		--Co[^odVo_inv
+			Vvw_inv			=>	Vvw_inv_B,
+			Vuv_inv			=>	Vuv_inv_B,
+			IU_inv			=>	IU_inv_B,		--Co[^odIo_inv
+			IV_inv			=>	IV_inv_B,
+			IW_inv			=>	IW_inv_B		
+			-------
+			);
+
+	nADC_GR0_CS_OUT		<= not AD_CS when AD_CH_EN(0) = '1' else 'Z';
+	nADC_GR1_CS_OUT		<= not AD_CS when AD_CH_EN(1) = '1' else 'Z';
+	nADC_GR2_CS_OUT		<= not AD_CS when AD_CH_EN(2) = '1' else 'Z';
+	nADC_GR3_CS_OUT		<= not AD_CS when AD_CH_EN(3) = '1' else 'Z';
+	nADC_GR4_CS_OUT		<= not AD_CS when AD_CH_EN(4) = '1' else 'Z';
+	nADC_GR5_CS_OUT		<= not AD_CS when AD_CH_EN(5) = '1' else 'Z';
+	nADC_GR6_CS_OUT		<= not AD_CS when AD_CH_EN(6) = '1' else 'Z';
+	nADC_GR7_CS_OUT		<= not AD_CS when AD_CH_EN(7) = '1' else 'Z';
+	nADC_GR8_CS_OUT		<= not AD_CS when AD_CH_EN(8) = '1' else 'Z';
+	nADC_GR9_CS_OUT		<= not AD_CS when AD_CH_EN(9) = '1' else 'Z';
+	ADC_GR0_SCLK_OUT	<= AD_CLK when AD_CH_EN(0) = '1' else 'Z';
+	ADC_GR1_SCLK_OUT	<= AD_CLK when AD_CH_EN(1) = '1' else 'Z';
+	ADC_GR2_SCLK_OUT	<= AD_CLK when AD_CH_EN(2) = '1' else 'Z';
+	ADC_GR3_SCLK_OUT	<= AD_CLK when AD_CH_EN(3) = '1' else 'Z';
+	ADC_GR4_SCLK_OUT	<= AD_CLK when AD_CH_EN(4) = '1' else 'Z';
+	ADC_GR5_SCLK_OUT	<= AD_CLK when AD_CH_EN(5) = '1' else 'Z';
+	ADC_GR6_SCLK_OUT	<= AD_CLK when AD_CH_EN(6) = '1' else 'Z';
+	ADC_GR7_SCLK_OUT	<= AD_CLK when AD_CH_EN(7) = '1' else 'Z';
+	ADC_GR8_SCLK_OUT	<= AD_CLK when AD_CH_EN(8) = '1' else 'Z';
+	ADC_GR9_SCLK_OUT	<= AD_CLK when AD_CH_EN(9) = '1' else 'Z';
+
+
+-- ====================================================
+-- WDT
+-- ====================================================
+
+	WDT :MMC_WDT
+		port map(
+			CLK100		=> CLK100,
+			RESET		=> RESET_BB,
+			A			=> BUS_A_BB(7 downto 0),
+			DW			=> BUS_DW_BB,
+			DR			=> BUS_DR_3,
+			RD			=> BUS_RD_3,
+			WR			=> BUS_WR_3,
+			
+			WDT_ON		=> WDT_ON,
+			ERROR		=> WDT_ERR
+			);
+
+
+
+
+-- ====================================================
+-- CPU Signals etc.
+-- ====================================================
+	GB	<= '1' when ADC_ERR = '1' or WDT_ERR = '1' else '0';
+
+	CPU_FPGA_RES(0)				<= nINT_SIG;
+	CPU_FPGA_RES(9 downto 1)	<= "111111111";
+	FPGA_RES					<= "1111111111";
+
+
+-- ====================================================
+-- DIO
+-- ====================================================
+-- RgAEg(20190713)
+--	DO_OUT					<= DO_IN(15 downto 0);			-- X[
+
+--------------------------------------------------------------Q[gMoIII---------------------------------------------------------------------
+-- (20190713):HeadspringDSPQ[gM
+--	nMMC_PWM1_OUT <= nMMC_PWM1_buf;
+--	nMMC_PWM2_OUT <= nMMC_PWM2_buf;
+	
+-- ver3.1:FPGAQ[gM
+--	nMMC_PWM1_OUT <= nMMC_PWM1_FPGA_B;
+--	nMMC_PWM2_OUT <= nMMC_PWM2_FPGA_B;
+
+	nMMC_PWM1_OUT <= nMMC_PWM1_FPGA_buf_buf_buf;
+	nMMC_PWM2_OUT <= nMMC_PWM2_FPGA_buf_buf_buf;
+---------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+	DO_OUT					<= nMMC_PWM1_buf(0) & nMMC_PWM1_buf(32) & nMMC_PWM2_buf(16) & BUS_A_IN(15 downto 5) & BUS_A_IN(0) & BUS_RnW_IN ;
+--ver3.7.3--DSPQ[gMo---
+--	nINV_PWM_OUT			<= nMMC_PWM1_buf(44) & nMMC_PWM1_buf(40) & nMMC_PWM1_buf(36) & nMMC_PWM1_buf(32) & nMMC_PWM1_buf(28) & nMMC_PWM1_buf(24) & nMMC_PWM1_buf(20) & nMMC_PWM1_buf(16) & nMMC_PWM1_buf(12) & nMMC_PWM1_buf(8) & nMMC_PWM1_buf(4) & nMMC_PWM1_buf(0);
+-------------------------------------
+
+--ver3.7.3--FPGAQ[gMo---
+	nINV_PWM_OUT			<= nMMC_PWM1_FPGA_B(44) & nMMC_PWM1_FPGA_B(40) & nMMC_PWM1_FPGA_B(36) & nMMC_PWM1_FPGA_B(32) & nMMC_PWM1_FPGA_B(28) & nMMC_PWM1_FPGA_B(24) & nMMC_PWM1_FPGA_B(20) & nMMC_PWM1_FPGA_B(16) & nMMC_PWM1_FPGA_B(12) & nMMC_PWM1_FPGA_B(8) & nMMC_PWM1_FPGA_B(4) & nMMC_PWM1_FPGA_B(0);
+-------------------------------------
+
+---------------------
+	DI_OUT(15 downto 0)		<= DI_LPF;						-- tB^MX[
+
+	nLED_OUT(0)				<= not PWM_ON;
+	nLED_OUT(1)				<= not WDT_ON;
+	nLED_OUT(2)				<= not WDT_ERR;
+	nLED_OUT(3)				<= not ADC_ERR;
+
+
+
+-- ====================================================
+-- Gate Signal
+-- ====================================================
+--RgAEg
+--vO
+-- nINV_PWM_OUT
+--	nINV_PWM_OUT	<= not INV_PWM_IN when GB = '0' and RESET = '0' else "111111111111";		-- GB
+
+
+
+--ver2--
+-- ====================================================
+-- control_top
+-- ====================================================
+--
+--	Control :control_top
+--		port map(
+--			CLK100		=> CLK100,									--100MNbN
+--			Vc_UP1		=>	Vc_UP1_B,		--RfTdVc
+--			Vc_UP2		=>	Vc_UP2_B,
+--			Vc_UP3		=>	Vc_UP3_B,
+--			Vc_UP4		=>	Vc_UP4_B,
+--			Vc_UN1		=>	Vc_UN1_B,
+--			Vc_UN2		=>	Vc_UN2_B,
+--			Vc_UN3		=>	Vc_UN3_B,
+--			Vc_UN4		=>	Vc_UN4_B,
+--			Vc_VP1		=>	Vc_VP1_B,
+--			Vc_VP2		=>	Vc_VP2_B,
+--			Vc_VP3		=>	Vc_VP3_B,
+--			Vc_VP4		=>	Vc_VP4_B,
+--			Vc_VN1		=>	Vc_VN1_B,
+--			Vc_VN2		=>	Vc_VN2_B,
+--			Vc_VN3		=>	Vc_VN3_B,
+--			Vc_VN4		=>	Vc_VN4_B,
+--			Vc_WP1		=>	Vc_WP1_B,
+--			Vc_WP2		=>	Vc_WP2_B,
+--			Vc_WP3		=>	Vc_WP3_B,
+--			Vc_WP4		=>	Vc_WP4_B,
+--			Vc_WN1		=>	Vc_WN1_B,
+--			Vc_WN2		=>	Vc_WN2_B,
+--			Vc_WN3		=>	Vc_WN3_B,
+--			Vc_WN4		=>	Vc_WN4_B,
+--			Iz_UP			=>	Iz_UP_B,			--A[dIz
+--			Iz_UN			=>	Iz_UN_B,
+--			Iz_VP			=>	Iz_VP_B,
+--			Iz_VN			=>	Iz_VN_B,
+--			Iz_WP			=>	Iz_WP_B,
+--			Iz_WN			=>	Iz_WN_B,
+--			Vdc			=>	Vdc_B,			--ddVdc
+--			Vuv_mmc		=>	Vuv_mmc_B,		--MMCodVo_mmc
+--			Vwu_mmc		=>	Vwu_mmc_B,
+--			Vvw_mmc		=>	Vvw_mmc_B,
+--			Vwu_inv		=>	Vwu_inv_B,		--Co[^odVo_inv
+--			Vvw_inv		=>	Vvw_inv_B,
+--			Vuv_inv		=>	Vuv_inv_B,
+--			IU_inv		=>	IU_inv_B,		--Co[^odIo_inv
+--			IV_inv		=>	IV_inv_B,
+--			IW_inv		=>	IW_inv_B,
+--			MRate_UP1	=>	MRate_UP1_B,		--UT
+--			MRate_UP2	=>	MRate_UP2_B,
+--			MRate_UP3	=>	MRate_UP3_B,
+--			MRate_UP4	=>	MRate_UP4_B,
+--			MRate_UN1	=>	MRate_UN1_B,
+--			MRate_UN2	=>	MRate_UN2_B,
+--			MRate_UN3	=>	MRate_UN3_B,
+--			MRate_UN4	=>	MRate_UN4_B,
+--			MRate_VP1	=>	MRate_VP1_B,		--VT
+--			MRate_VP2	=>	MRate_VP2_B,
+--			MRate_VP3	=>	MRate_VP3_B,
+--			MRate_VP4	=>	MRate_VP4_B,
+--			MRate_VN1	=>	MRate_VN1_B,
+--			MRate_VN2	=>	MRate_VN2_B,
+--			MRate_VN3	=>	MRate_VN3_B,
+--			MRate_VN4	=>	MRate_VN4_B,
+--			MRate_WP1	=>	MRate_WP1_B,		--WT
+--			MRate_WP2	=>	MRate_WP2_B,
+--			MRate_WP3	=>	MRate_WP3_B,
+--			MRate_WP4	=>	MRate_WP4_B,
+--			MRate_WN1	=>	MRate_WN1_B,
+--			MRate_WN2	=>	MRate_WN2_B,
+--			MRate_WN3	=>	MRate_WN3_B,
+--			MRate_WN4	=>	MRate_WN4_B,
+--			------
+--			--ver3.4.2--chipscopefobOp---------------------
+--			VAu_out 		=>	VAu_B,
+--			VAv_out 		=>	VAv_B,
+--			vb_up1_out  =>	vb_up1_B,
+--			vb_up2_out  =>	vb_up2_B,
+--			vb_up3_out  =>	vb_up3_B,
+--			vb_up4_out  =>	vb_up4_B,
+--			vb_un1_out  =>	vb_un1_B,
+--			vb_un2_out  =>	vb_un2_B,
+--			vb_un3_out  =>	vb_un3_B,
+--			vb_un4_out  =>	vb_un4_B,
+--			vb_vp1_out  =>	vb_vp1_B,
+--			vb_vp2_out  =>	vb_vp2_B,
+--			vb_vp3_out  =>	vb_vp3_B,
+--			vb_vp4_out  =>	vb_vp4_B,
+--			vb_vn1_out  =>	vb_vn1_B,
+--			vb_vn2_out  =>	vb_vn2_B,
+--			vb_vn3_out  =>	vb_vn3_B,
+--			vb_vn4_out  =>	vb_vn4_B,
+--			-------------------------------------------------
+--			--ver3.7--lp
+--			GATE_EN => GATE_EN_B,
+--			----------
+--			--ver3.7.1--
+--			VA_no_limit_U  =>	VA_no_limit_U_B,
+--			VA_no_limit_V  =>	VA_no_limit_V_B,
+--			----------
+--			--ver3.7.5--
+--			Voref_out  =>	Voref_B,
+--			------------
+--			--ver3.8.5(debug)--
+--			Iz_UP_N_debug_out => Iz_UP_N_debug_out_B,
+--			Iz_UP_N_out => Iz_UP_N_out_B,
+--			-------------------
+--			
+--			----ver1.1(QMDB)----			
+--			dVoref_out => dVoref_out_B,
+--			IC_N_out   => IC_N_out_B,
+--			Vo_N_out   => Vo_N_out_B,
+--			QMDB_OUTPUT_out => QMDB_OUTPUT_out_B,
+--			Vdc_N_out  => Vdc_N_out_B,
+--			soft_cnt_out	 => soft_cnt_out_B,
+--			clk10k_B_out => clk10k_BB,
+--			cnt80k_debug => cnt80k_debug_B
+--			-------------------
+--			);
+--
+-------------
+
+
+--ver2.3--
+-- ====================================================
+-- MMC_PWM_FPGA
+-- ====================================================
+
+	MMC_PWM_FPGA_GEN : MMC_PWM_FPGA
+		port map(
+			CLK100		=> CLK100,
+			RESET		=> RESET_BB,
+			A			=> BUS_A_BB(7 downto 0),
+			DW			=> BUS_DW_BB,
+--			DR			=> BUS_DR_1,
+--			DR2			=> BUS_DR_1_2,
+--			DR3			=> BUS_DR_1_3,
+			RD			=> BUS_RD_1,
+			WR			=> BUS_WR_1,
+			
+			GB       => GB,
+			
+			MRate_UP1 => X"0000",
+			MRate_UP2 => X"0000",
+			MRate_UP3 => X"0000",
+			MRate_UP4 => X"0000",
+			MRate_UN1 => X"0000",
+			MRate_UN2 => X"0000",
+			MRate_UN3 => X"0000",
+			MRate_UN4 => X"0000",
+			MRate_VP1 => X"0000",
+			MRate_VP2 => X"0000",
+			MRate_VP3 => X"0000",
+			MRate_VP4 => X"0000",
+			MRate_VN1 => X"0000",
+			MRate_VN2 => X"0000",
+			MRate_VN3 => X"0000",
+			MRate_VN4 => X"0000",
+		
+			--ver2.6.4--
+			REF_UP1_vector => X"0000",
+			REF_UP2_vector => X"0000",
+			REF_UP3_vector => X"0000",
+			REF_UP4_vector	=> X"0000",
+			REF_UN1_vector => X"0000",
+			REF_UN2_vector	=> X"0000",
+			REF_UN3_vector	=> X"0000",
+			REF_UN4_vector	=> X"0000",
+			REF_VP1_vector => X"0000",
+			REF_VP2_vector	=> X"0000",
+			REF_VP3_vector	=> X"0000",
+			REF_VP4_vector	=> X"0000",
+			REF_VN1_vector	=> X"0000",
+			REF_VN2_vector	=> X"0000",
+			REF_VN3_vector	=> X"0000",
+			REF_VN4_vector	=> X"0000",
+			----------------
+			--ver3.4.2--chipscopefobOp---------------------
+			VAu 	  =>	X"0000",
+			VAv 	  =>	X"0000",
+			vb_up1  =>	X"0000",
+			vb_up2  =>	X"0000",
+			vb_up3  =>	X"0000",
+			vb_up4  =>	X"0000",
+			vb_un1  =>	X"0000",
+			vb_un2  =>	X"0000",
+			vb_un3  =>	X"0000",
+			vb_un4  =>	X"0000",
+			vb_vp1  =>	X"0000",
+			vb_vp2  =>	X"0000",
+			vb_vp3  =>	X"0000",
+			vb_vp4  =>	X"0000",
+			vb_vn1  =>	X"0000",
+			vb_vn2  =>	X"0000",
+			vb_vn3  =>	X"0000",
+			vb_vn4  =>	X"0000",
+
+			nMMC_PWM1_FPGA	=> nMMC_PWM1_FPGA_B,
+			nMMC_PWM2_FPGA	=> nMMC_PWM2_FPGA_B,
+			nINT_SIG_FPGA	=> nINT_SIG_FPGA_B,
+			
+			PWM_ON_FPGA		=> PWM_ON_FPGA_B,
+			GB_FPGA			=> GB_FPGA_B,
+
+			--ver3.7--lp
+--			GATE_EN_out => GATE_EN_B,
+			----------
+			--ver3.7.1--
+			VA_no_limit_U  =>	X"0000",
+			VA_no_limit_V  =>	X"0000",
+			----------
+			--ver3.7.5--
+			Voref_BB  =>	X"0000",
+			------------
+			--ver3.8.5(debug)--
+			Iz_UP_N_debug_out_BB => X"0000",
+			Iz_UP_N_out_BB => X"0000",
+			-------------------
+			----ver1.1(QMDB)----			
+			dVoref_out_BB      => X"0000",
+			IC_N_out_BB        => X"0000",
+			Vo_N_out_BB        => X"0000",
+			QMDB_OUTPUT_out_BB => X"0000",
+			Vdc_N_out_BB       => X"0000",
+			soft_cnt_out_BB	 => X"0000",
+			clk10k_BBB => '1',
+			cnt80k_debug_BB =>X"0000"
+			);
+
+--	SVPWM_Control--20220303
+		SVPWM_Control :control_top2
+		port map(
+			CLK		=> CLK100,									--100MNbN
+			reset 		=> RESET,
+			clk_enable => '1',
+			V_uv		=>	Vuv_mmc_B,
+         V_uw		=>	Vvw_mmc_B,
+         iout_u	=>	Vuv_inv_B,
+         iout_v 	=>	Vvw_inv_B,
+         iL_u 	   =>	IU_inv_B,
+         iL_v     =>	IV_inv_B,
+			switch_control		=>	Vwu_inv_B,
+			Up_current			=>	Iz_UP_B,			--A[dIz
+         Un_current			=>	Iz_UN_B,
+         Vp_current 			=>	Iz_VP_B,
+         Vn_current			=>	Iz_VN_B,
+         Wp_current			=>	Iz_WP_B,
+         UW_current			=>	Iz_WN_B,
+			CV_U1		=>	Vc_UP1_B,		--RfTdVc
+			CV_U2		=>	Vc_UP2_B,
+			CV_U3		=>	Vc_UP3_B,
+			CV_U4		=>	Vc_UP4_B,
+			CV_U5		=>	Vc_UN1_B,
+			CV_U6		=>	Vc_UN2_B,
+			CV_U7		=>	Vc_UN3_B,
+			CV_U8		=>	Vc_UN4_B,
+			CV_V1		=>	Vc_VP1_B,
+			CV_V2		=>	Vc_VP2_B,
+			CV_V3		=>	Vc_VP3_B,
+			CV_V4		=>	Vc_VP4_B,
+			CV_V5		=>	Vc_VN1_B,
+			CV_V6		=>	Vc_VN2_B,
+			CV_V7		=>	Vc_VN3_B,
+			CV_V8		=>	Vc_VN4_B,
+			CV_W1		=>	Vc_WP1_B,
+			CV_W2		=>	Vc_WP2_B,
+			CV_W3		=>	Vc_WP3_B,
+			CV_W4		=>	Vc_WP4_B,
+			CV_W5		=>	Vc_WN1_B,
+			CV_W6		=>	Vc_WN2_B,
+			CV_W7		=>	Vc_WN3_B,
+			CV_W8		=>	Vc_WN4_B,
+			----ce_out_0			=>	,	
+			----ce_out_1			=>	,
+			MMC_PWM_OUT1	=> nMMC_PWM1_FPGA_buf_buf_buf,
+			MMC_PWM_OUT2	=> nMMC_PWM2_FPGA_buf_buf_buf,
+			
+			Vuv					=> Vuv_ILA,
+			Vvw					=> Vvw_ILA,
+			Ioutu					=> Ioutu_ILA,
+			Ioutv					=> Ioutv_ILA,
+			ILu					=> ILu_ILA,
+			ILv					=> ILv_ILA,
+			Vrefa					=> Vrefa_ILA,
+			Vrefb					=> Vrefb_ILA,
+			deltaTa				=> deltaTa_ILA,
+			deltaTb				=> deltaTb_ILA,
+			deltaTa_hold		=> deltaTa_hold_ILA,
+			deltaTb_hold		=> deltaTb_hold_ILA,
+			switch_control1	=> switche_contol_ILA
+			);
+
+-----------
+
+--	count_1MHz--
+cnt_1MHz0 :count_1M
+		port map(
+			CLK		=> CLK100,									--100MNbN
+			cnt_1M 	=> cnt_1MHz
+	);
+
+--	count_50kHz--
+cnt_50kHz0 :count_50k
+		port map(
+			CLK		=> cnt_1MHz,
+			cnt_50k 	=> cnt_50kHz
+	);
+	
+---icon--------
+icon_srdcdb0 : icon_srdcdb
+	port map(
+			CONTROL0 => CONTROL0
+	);
+
+---ila---------
+ila_srdcdb0 : ila_srdcdb
+	port map(
+			CONTROL => CONTROL0,
+			CLK => cnt_50kHz,
+			TRIG0 => Vuv_ILA,
+			TRIG1 => Vvw_ILA,
+			TRIG2 => Ioutu_ILA,
+			TRIG3 => Ioutv_ILA,
+			TRIG4 => ILu_ILA,
+			TRIG5 => ILv_ILA,
+			TRIG6 => Vrefa_ILA,
+			TRIG7 => Vrefb_ILA,
+			TRIG8 => deltaTa_ILA,
+			TRIG9 => deltaTb_ILA,
+			TRIG10 => deltaTa_hold_ILA,
+			TRIG11 => deltaTb_hold_ILA,
+			TRIG12 => switche_contol_ILA
+	);
+---------------
+
+
+-- ====================================================
+-- Dummy Signal for unused pins
+-- ====================================================
+	process(CLK100)
+	begin
+		if CLK100'event and CLK100 = '1' then
+			DUMMY	<= BUS_CLK_IN & BUS_CS3_BB & BUS_RD_BB & BUS_WR_BB & BUS_A_BB(16);
+		end if;
+	end process;
+	
+	nBUS_WAIT_OUT	<= '1';
+
+
+end Behavioral;
+
+
+
+\end{mylisting}

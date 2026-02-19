@@ -1,0 +1,672 @@
+%Root main.tex
+%---------------------------------------------------------------------------
+%付録A　付録
+%---------------------------------------------------------------------------
+
+%\lstnewenvironment{mylisting}[1][]
+%    {\lstset{
+%        frame=single,
+%        numbersep=10pt,
+%        tabsize=2,
+%        #1
+%    }
+%}{}
+\begin{mylisting}[language=c,caption=電流方向検出モジュール,label=hurokuB_denryu]
+
+#include <Stdlib.h>
+#include <String.h>
+#include <math.h>
+#include <Psim.h>
+
+// PLACE GLOBAL VARIABLES OR USER FUNCTIONS HERE...
+
+double iL;
+int K;
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationStep
+//   This function runs at every time step.
+//double t: (read only) time
+//double delt: (read only) time step as in Simulation control
+//double *in: (read only) zero based array of input values. in[0] is the first node, in[1] second input...
+//double *out: (write only) zero based array of output values. out[0] is the first node, out[1] second output...
+//int *pnError: (write only)  assign  *pnError = 1;  if there is an error and set the error message in szErrorMsg
+//    strcpy(szErrorMsg, "Error message here..."); 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationStep(
+		double t, double delt, double *in, double *out,
+		 int *pnError, char * szErrorMsg,
+		 void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+// ENTER YOUR CODE HERE...
+//in
+iL = in[0];
+
+	if(iL >= 0){
+	K = 0;
+	}else{
+	K = 1;
+	}
+
+//out
+out[0] =K;
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationBegin
+//   Initialization function. This function runs once at the beginning of simulation
+//   For parameter sweep or AC sweep simulation, this function runs at the beginning of each simulation cycle.
+//   Use this function to initialize static or global variables.
+//const char *szId: (read only) Name of the C-block 
+//int nInputCount: (read only) Number of input nodes
+//int nOutputCount: (read only) Number of output nodes
+//int nParameterCount: (read only) Number of parameters is always zero for C-Blocks.  Ignore nParameterCount and pszParameters
+//int *pnError: (write only)  assign  *pnError = 1;  if there is an error and set the error message in szErrorMsg
+//    strcpy(szErrorMsg, "Error message here..."); 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationBegin(
+		const char *szId, int nInputCount, int nOutputCount,
+		 int nParameterCount, const char ** pszParameters,
+		 int *pnError, char * szErrorMsg,
+		 void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+// ENTER INITIALIZATION CODE HERE...
+
+
+
+
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationEnd
+//   Termination function. This function runs once at the end of simulation
+//   For parameter sweep or AC sweep simulation, this function runs at the end of each simulation cycle.
+//   Use this function to de-allocate any allocated memory or to save the result of simulation in an alternate file.
+// Ignore all parameters for C-block 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationEnd(const char *szId, void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+
+
+
+
+}
+
+
+
+
+
+\end{mylisting}
+
+\begin{mylisting}[language=c,caption=1番レグ用比較モジュール,label=hurokuB_hikakuA]
+
+#include <Stdlib.h>
+#include <String.h>
+#include <math.h>
+#include <Psim.h>
+
+// PLACE GLOBAL VARIABLES OR USER FUNCTIONS HERE...
+double in1,in2,in3,in4;
+int buf1,buf2,buf3;
+int out1;
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationStep
+//   This function runs at every time step.
+//double t: (read only) time
+//double delt: (read only) time step as in Simulation control
+//double *in: (read only) zero based array of input values. in[0] is the first node, in[1] second input...
+//double *out: (write only) zero based array of output values. out[0] is the first node, out[1] second output...
+//int *pnError: (write only)  assign  *pnError = 1;  if there is an error and set the error message in szErrorMsg
+//    strcpy(szErrorMsg, "Error message here..."); 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationStep(
+		double t, double delt, double *in, double *out,
+		 int *pnError, char * szErrorMsg,
+		 void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+// ENTER YOUR CODE HERE...
+//in
+
+in1 = in[0];
+in2 = in[1];
+in3 = in[2];
+in4 = in[3];
+
+	if(in1 > in2){
+	buf1 = 1;
+	}else if(in1 == in2){
+	buf1 = 1;
+	}else{
+	buf1 = 0;
+	}
+
+	if(in1 >= in3){
+	buf2 = 1;
+	}else if(in1 == in3){
+	buf1 = 1;
+	}else{
+	buf2 = 0;
+	}
+	if(in1 >= in4){
+	buf3 = 1;
+	}else if(in1 == in3){
+	buf1 = 1;
+	}else{
+	buf3 = 0;
+	}
+	
+	//out1 = buf1 + buf2 + buf3;
+
+//out
+out[0] =buf1;
+out[1] =buf2;
+out[2] =buf3;
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationBegin
+//   Initialization function. This function runs once at the beginning of simulation
+//   For parameter sweep or AC sweep simulation, this function runs at the beginning of each simulation cycle.
+//   Use this function to initialize static or global variables.
+//const char *szId: (read only) Name of the C-block 
+//int nInputCount: (read only) Number of input nodes
+//int nOutputCount: (read only) Number of output nodes
+//int nParameterCount: (read only) Number of parameters is always zero for C-Blocks.  Ignore nParameterCount and pszParameters
+//int *pnError: (write only)  assign  *pnError = 1;  if there is an error and set the error message in szErrorMsg
+//    strcpy(szErrorMsg, "Error message here..."); 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationBegin(
+		const char *szId, int nInputCount, int nOutputCount,
+		 int nParameterCount, const char ** pszParameters,
+		 int *pnError, char * szErrorMsg,
+		 void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+// ENTER INITIALIZATION CODE HERE...
+
+
+
+
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationEnd
+//   Termination function. This function runs once at the end of simulation
+//   For parameter sweep or AC sweep simulation, this function runs at the end of each simulation cycle.
+//   Use this function to de-allocate any allocated memory or to save the result of simulation in an alternate file.
+// Ignore all parameters for C-block 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationEnd(const char *szId, void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+
+
+
+
+}
+
+
+
+
+
+\end{mylisting}
+
+\begin{mylisting}[language=c,caption=2番レグ用比較モジュール,label=hurokuB_hikakuB]
+
+#include <Stdlib.h>
+#include <String.h>
+#include <math.h>
+#include <Psim.h>
+
+// PLACE GLOBAL VARIABLES OR USER FUNCTIONS HERE...
+double in1,in2,in3,in4;
+int buf1,buf2,buf3;
+int out1;
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationStep
+//   This function runs at every time step.
+//double t: (read only) time
+//double delt: (read only) time step as in Simulation control
+//double *in: (read only) zero based array of input values. in[0] is the first node, in[1] second input...
+//double *out: (write only) zero based array of output values. out[0] is the first node, out[1] second output...
+//int *pnError: (write only)  assign  *pnError = 1;  if there is an error and set the error message in szErrorMsg
+//    strcpy(szErrorMsg, "Error message here..."); 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationStep(
+		double t, double delt, double *in, double *out,
+		 int *pnError, char * szErrorMsg,
+		 void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+// ENTER YOUR CODE HERE...
+//in
+
+in1 = in[0];
+in2 = in[1];
+in3 = in[2];
+in4 = in[3];
+
+	if(in1 > in2){
+	buf1 = 1;
+	}else if(in1 == in2){
+	buf1 = 0;
+	}else{
+	buf1 = 0;
+	}
+
+	if(in1 >= in3){
+	buf2 = 1;
+	}else if(in1 == in3){
+	buf1 = 1;
+	}else{
+	buf2 = 0;
+	}
+	if(in1 >= in4){
+	buf3 = 1;
+	}else if(in1 == in3){
+	buf1 = 1;
+	}else{
+	buf3 = 0;
+	}
+	
+	//out1 = buf1 + buf2 + buf3;
+
+//out
+out[0] =buf1;
+out[1] =buf2;
+out[2] =buf3;
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationBegin
+//   Initialization function. This function runs once at the beginning of simulation
+//   For parameter sweep or AC sweep simulation, this function runs at the beginning of each simulation cycle.
+//   Use this function to initialize static or global variables.
+//const char *szId: (read only) Name of the C-block 
+//int nInputCount: (read only) Number of input nodes
+//int nOutputCount: (read only) Number of output nodes
+//int nParameterCount: (read only) Number of parameters is always zero for C-Blocks.  Ignore nParameterCount and pszParameters
+//int *pnError: (write only)  assign  *pnError = 1;  if there is an error and set the error message in szErrorMsg
+//    strcpy(szErrorMsg, "Error message here..."); 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationBegin(
+		const char *szId, int nInputCount, int nOutputCount,
+		 int nParameterCount, const char ** pszParameters,
+		 int *pnError, char * szErrorMsg,
+		 void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+// ENTER INITIALIZATION CODE HERE...
+
+
+
+
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationEnd
+//   Termination function. This function runs once at the end of simulation
+//   For parameter sweep or AC sweep simulation, this function runs at the end of each simulation cycle.
+//   Use this function to de-allocate any allocated memory or to save the result of simulation in an alternate file.
+// Ignore all parameters for C-block 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationEnd(const char *szId, void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+
+
+
+
+}
+
+
+
+
+
+\end{mylisting}
+
+\begin{mylisting}[language=c,caption=3番レグ用比較モジュール,label=hurokuB_hikakuC]
+
+#include <Stdlib.h>
+#include <String.h>
+#include <math.h>
+#include <Psim.h>
+
+// PLACE GLOBAL VARIABLES OR USER FUNCTIONS HERE...
+double in1,in2,in3,in4;
+int buf1,buf2,buf3;
+int out1;
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationStep
+//   This function runs at every time step.
+//double t: (read only) time
+//double delt: (read only) time step as in Simulation control
+//double *in: (read only) zero based array of input values. in[0] is the first node, in[1] second input...
+//double *out: (write only) zero based array of output values. out[0] is the first node, out[1] second output...
+//int *pnError: (write only)  assign  *pnError = 1;  if there is an error and set the error message in szErrorMsg
+//    strcpy(szErrorMsg, "Error message here..."); 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationStep(
+		double t, double delt, double *in, double *out,
+		 int *pnError, char * szErrorMsg,
+		 void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+// ENTER YOUR CODE HERE...
+//in
+
+in1 = in[0];
+in2 = in[1];
+in3 = in[2];
+in4 = in[3];
+
+	if(in1 > in2){
+	buf1 = 1;
+	}else if(in1 == in2){
+	buf1 = 0;
+	}else{
+	buf1 = 0;
+	}
+
+	if(in1 >= in3){
+	buf2 = 1;
+	}else if(in1 == in3){
+	buf1 = 0;
+	}else{
+	buf2 = 0;
+	}
+	if(in1 >= in4){
+	buf3 = 1;
+	}else if(in1 == in3){
+	buf1 = 1;
+	}else{
+	buf3 = 0;
+	}
+	
+	//out1 = buf1 + buf2 + buf3;
+
+//out
+out[0] =buf1;
+out[1] =buf2;
+out[2] =buf3;
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationBegin
+//   Initialization function. This function runs once at the beginning of simulation
+//   For parameter sweep or AC sweep simulation, this function runs at the beginning of each simulation cycle.
+//   Use this function to initialize static or global variables.
+//const char *szId: (read only) Name of the C-block 
+//int nInputCount: (read only) Number of input nodes
+//int nOutputCount: (read only) Number of output nodes
+//int nParameterCount: (read only) Number of parameters is always zero for C-Blocks.  Ignore nParameterCount and pszParameters
+//int *pnError: (write only)  assign  *pnError = 1;  if there is an error and set the error message in szErrorMsg
+//    strcpy(szErrorMsg, "Error message here..."); 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationBegin(
+		const char *szId, int nInputCount, int nOutputCount,
+		 int nParameterCount, const char ** pszParameters,
+		 int *pnError, char * szErrorMsg,
+		 void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+// ENTER INITIALIZATION CODE HERE...
+
+
+
+
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationEnd
+//   Termination function. This function runs once at the end of simulation
+//   For parameter sweep or AC sweep simulation, this function runs at the end of each simulation cycle.
+//   Use this function to de-allocate any allocated memory or to save the result of simulation in an alternate file.
+// Ignore all parameters for C-block 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationEnd(const char *szId, void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+
+
+
+
+}
+
+
+
+
+
+\end{mylisting}
+
+\begin{mylisting}[language=c,caption=4番レグ用比較モジュール,label=hurokuB_hikakuD]
+
+#include <Stdlib.h>
+#include <String.h>
+#include <math.h>
+#include <Psim.h>
+
+// PLACE GLOBAL VARIABLES OR USER FUNCTIONS HERE...
+double in1,in2,in3,in4;
+int buf1,buf2,buf3;
+int out1;
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationStep
+//   This function runs at every time step.
+//double t: (read only) time
+//double delt: (read only) time step as in Simulation control
+//double *in: (read only) zero based array of input values. in[0] is the first node, in[1] second input...
+//double *out: (write only) zero based array of output values. out[0] is the first node, out[1] second output...
+//int *pnError: (write only)  assign  *pnError = 1;  if there is an error and set the error message in szErrorMsg
+//    strcpy(szErrorMsg, "Error message here..."); 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationStep(
+		double t, double delt, double *in, double *out,
+		 int *pnError, char * szErrorMsg,
+		 void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+// ENTER YOUR CODE HERE...
+//in
+
+in1 = in[0];
+in2 = in[1];
+in3 = in[2];
+in4 = in[3];
+
+	if(in1 > in2){
+	buf1 = 1;
+	}else if(in1 == in2){
+	buf1 = 0;
+	}else{
+	buf1 = 0;
+	}
+
+	if(in1 >= in3){
+	buf2 = 1;
+	}else if(in1 == in3){
+	buf1 = 0;
+	}else{
+	buf2 = 0;
+	}
+	if(in1 >= in4){
+	buf3 = 1;
+	}else if(in1 == in3){
+	buf1 = 0;
+	}else{
+	buf3 = 0;
+	}
+	
+	//out1 = buf1 + buf2 + buf3;
+
+//out
+out[0] =buf1;
+out[1] =buf2;
+out[2] =buf3;
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationBegin
+//   Initialization function. This function runs once at the beginning of simulation
+//   For parameter sweep or AC sweep simulation, this function runs at the beginning of each simulation cycle.
+//   Use this function to initialize static or global variables.
+//const char *szId: (read only) Name of the C-block 
+//int nInputCount: (read only) Number of input nodes
+//int nOutputCount: (read only) Number of output nodes
+//int nParameterCount: (read only) Number of parameters is always zero for C-Blocks.  Ignore nParameterCount and pszParameters
+//int *pnError: (write only)  assign  *pnError = 1;  if there is an error and set the error message in szErrorMsg
+//    strcpy(szErrorMsg, "Error message here..."); 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationBegin(
+		const char *szId, int nInputCount, int nOutputCount,
+		 int nParameterCount, const char ** pszParameters,
+		 int *pnError, char * szErrorMsg,
+		 void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+// ENTER INITIALIZATION CODE HERE...
+
+
+
+
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationEnd
+//   Termination function. This function runs once at the end of simulation
+//   For parameter sweep or AC sweep simulation, this function runs at the end of each simulation cycle.
+//   Use this function to de-allocate any allocated memory or to save the result of simulation in an alternate file.
+// Ignore all parameters for C-block 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationEnd(const char *szId, void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+
+
+
+
+}
+
+
+
+
+
+\end{mylisting}
+
+\begin{mylisting}[language=c,caption=各スイッチングモジュール,label=hurokuB_switxhhikaku]
+
+#include <Stdlib.h>
+#include <String.h>
+#include <math.h>
+#include <Psim.h>
+
+// PLACE GLOBAL VARIABLES OR USER FUNCTIONS HERE...
+double sw;
+int in1,in2,in3,in4;
+int out1,out2,out3,out4;
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationStep
+//   This function runs at every time step.
+//double t: (read only) time
+//double delt: (read only) time step as in Simulation control
+//double *in: (read only) zero based array of input values. in[0] is the first node, in[1] second input...
+//double *out: (write only) zero based array of output values. out[0] is the first node, out[1] second output...
+//int *pnError: (write only)  assign  *pnError = 1;  if there is an error and set the error message in szErrorMsg
+//    strcpy(szErrorMsg, "Error message here..."); 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationStep(
+		double t, double delt, double *in, double *out,
+		 int *pnError, char * szErrorMsg,
+		 void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+// ENTER YOUR CODE HERE...
+//in
+sw = in[0];
+in1 = in[1];
+in2 = in[2];
+in3 = in[3];
+in4 = in[4];
+
+	if(in1 >= sw){
+	out1 = 1;
+	}else{
+	out1 = 0;
+	}
+
+	if(in2 >= sw){
+	out2 = 1;
+	}else{
+	out2 = 0;
+	}
+
+	if(in3 >= sw){
+	out3 = 1;
+	}else{
+	out3 = 0;
+	}
+
+	if(in4 >= sw){
+	out4 = 1;
+	}else{
+	out4 = 0;
+	}
+
+//out
+out[0] =out1;
+out[1] =out2;
+out[2] =out3;
+out[3] =out4;
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationBegin
+//   Initialization function. This function runs once at the beginning of simulation
+//   For parameter sweep or AC sweep simulation, this function runs at the beginning of each simulation cycle.
+//   Use this function to initialize static or global variables.
+//const char *szId: (read only) Name of the C-block 
+//int nInputCount: (read only) Number of input nodes
+//int nOutputCount: (read only) Number of output nodes
+//int nParameterCount: (read only) Number of parameters is always zero for C-Blocks.  Ignore nParameterCount and pszParameters
+//int *pnError: (write only)  assign  *pnError = 1;  if there is an error and set the error message in szErrorMsg
+//    strcpy(szErrorMsg, "Error message here..."); 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationBegin(
+		const char *szId, int nInputCount, int nOutputCount,
+		 int nParameterCount, const char ** pszParameters,
+		 int *pnError, char * szErrorMsg,
+		 void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+// ENTER INITIALIZATION CODE HERE...
+
+
+
+
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// FUNCTION: SimulationEnd
+//   Termination function. This function runs once at the end of simulation
+//   For parameter sweep or AC sweep simulation, this function runs at the end of each simulation cycle.
+//   Use this function to de-allocate any allocated memory or to save the result of simulation in an alternate file.
+// Ignore all parameters for C-block 
+// DO NOT CHANGE THE NAME OR PARAMETERS OF THIS FUNCTION
+void SimulationEnd(const char *szId, void ** reserved_UserData, int reserved_ThreadIndex, void * reserved_AppPtr)
+{
+
+
+
+
+}
+
+
+
+
+
+\end{mylisting}
+

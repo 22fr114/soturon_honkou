@@ -1,0 +1,64 @@
+%Root main.tex
+%---------------------------------------------------------------------------
+%付録A　付録
+%---------------------------------------------------------------------------
+
+%\lstnewenvironment{mylisting}[1][]
+%    {\lstset{
+%        frame=single,
+%        numbersep=10pt,
+%        tabsize=2,
+%        #1
+%    }
+%}{}
+\begin{mylisting}[language=c,caption=セル電圧バランス制御キャリア同期モジュール,label=appC_Cell_Balance]
+
+function [y1,y2,y3,y4,y5] = fcn(u1,u2,u3,u4,u5,cnt)
+%永続変数の定義
+persistent y1\_buf y2\_buf y3\_buf y4\_buf y5\_buf;
+
+%%初期化
+if isempty(y1\_buf)
+    y1\_buf = 0;
+end
+
+if isempty(y2\_buf)
+    y2\_buf = 0;
+end
+
+if isempty(y3\_buf)
+    y3\_buf = 0;
+end
+
+if isempty(y4\_buf)
+    y4\_buf = 0;
+end
+
+if isempty(y5\_buf)
+    y5\_buf = 0;
+end
+
+%%演算
+if(cnt == 200)
+    y1 = u1;
+    y2 = u2;
+    y3 = u3;
+    y4 = u4;
+    y5 = u5;
+    
+    y1\_buf = u1;
+    y2\_buf = u2;
+    y3\_buf = u3;
+    y4\_buf = u4;
+    y5\_buf = u5;
+else
+    y1 = y1\_buf;
+    y2 = y2\_buf;
+    y3 = y3\_buf;
+    y4 = y4\_buf;
+    y5 = y5\_buf;
+end
+
+
+\end{mylisting}
+

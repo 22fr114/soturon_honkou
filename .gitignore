@@ -16,11 +16,12 @@
 *.ind
 
 # PDF file
-*.pdf
-!example_abst.pdf
+#*.pdf
+#!example_abst.pdf
 # VS Code settings (optional)
 .vscode/
 
 # OS generated files
 .DS_Store
 Thumbs.db
+
